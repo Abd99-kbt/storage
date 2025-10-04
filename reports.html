@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام التقارير الشامل - إدارة المستودعات</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .report-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .report-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .modal-xl {
+            max-width: 1200px;
+        }
+
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .filter-section {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .kpi-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e5e7eb;
+        }
+
+        .kpi-value {
+            font-size: 2xl;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .kpi-label {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .kpi-change {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .kpi-positive {
+            color: #059669;
+        }
+
+        .kpi-negative {
+            color: #dc2626;
+        }
+
+        .report-summary {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .trend-up {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .trend-down {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .trend-stable {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .export-btn {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .export-btn:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+
+        .export-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin: 0 auto 8px;
+        }
+
+        .time-period-selector {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .period-btn {
+            flex: 1;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .period-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .period-btn:not(.active) {
+            color: #6b7280;
+        }
+
+        .period-btn:not(.active):hover {
+            background: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="container mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">نظام التقارير الشامل</h1>
+                    <p class="text-gray-600">تحليلات متقدمة وتقارير مفصلة للأداء</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button id="scheduled-reports-btn" class="bg-white text-gray-700 px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-200 border border-gray-200">
+                        <i class="fas fa-calendar-alt ml-2"></i>التقارير المجدولة
+                    </button>
+                    <button id="custom-report-btn" class="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-200">
+                        <i class="fas fa-plus ml-2"></i>تقرير مخصص
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Period Selector -->
+        <div class="mb-8">
+            <div class="flex items-center justify-center">
+                <div class="time-period-selector">
+                    <button class="period-btn">اليوم</button>
+                    <button class="period-btn active">أسبوع</button>
+                    <button class="period-btn">شهر</button>
+                    <button class="period-btn">ربع سنوي</button>
+                    <button class="period-btn">سنة</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="kpi-card">
+                <div class="kpi-value">1,247</div>
+                <div class="kpi-label">إجمالي المواد</div>
+                <div class="kpi-change kpi-positive">
+                    <i class="fas fa-arrow-up ml-1"></i>+12.5%
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-value">892 طن</div>
+                <div class="kpi-label">إجمالي الوزن</div>
+                <div class="kpi-change kpi-positive">
+                    <i class="fas fa-arrow-up ml-1"></i>+8.3%
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-value">67</div>
+                <div class="kpi-label">الطلبات المكتملة</div>
+                <div class="kpi-change kpi-positive">
+                    <i class="fas fa-arrow-up ml-1"></i>+15.2%
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-value">125,430</div>
+                <div class="kpi-label">إجمالي الإيرادات</div>
+                <div class="kpi-change kpi-positive">
+                    <i class="fas fa-arrow-up ml-1"></i>+22.1%
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Summary -->
+        <div class="report-summary">
+            <h3 class="text-xl font-semibold text-gray-800 mb-4">ملخص الأداء - سبتمبر 2025</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600 mb-1">1,250 طن</div>
+                    <div class="text-sm text-gray-600">إجمالي المواد المدخلة</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600 mb-1">980 طن</div>
+                    <div class="text-sm text-gray-600">إجمالي المواد المخرجة</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-red-600 mb-1">45 طن</div>
+                    <div class="text-sm text-gray-600">الهدر (3.6%)</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600 mb-1">270 طن</div>
+                    <div class="text-sm text-gray-600">المخزون الحالي</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="chart-container">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800">حركة المواد الشهرية</h3>
+                    <div class="flex space-x-2">
+                        <button id="export-material-btn" class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 text-sm">
+                            <i class="fas fa-download ml-1"></i>تصدير البيانات
+                        </button>
+                        <button id="print-material-btn" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm">
+                            <i class="fas fa-print ml-1"></i>طباعة
+                        </button>
+                        <button id="line-chart-btn" class="p-2 text-blue-600 hover:text-blue-800 rounded-lg hover:bg-blue-50">
+                            <i class="fas fa-chart-line"></i>
+                        </button>
+                        <button id="bar-chart-btn" class="p-2 text-green-600 hover:text-green-800 rounded-lg hover:bg-green-50">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="materialMovementChart" style="height: 350px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800">توزيع المواد حسب النوع</h3>
+                    <button id="refresh-chart-btn" class="p-2 text-gray-600 hover:text-gray-800 rounded-lg hover:bg-gray-50">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div id="materialDistributionChart" style="height: 350px;"></div>
+            </div>
+        </div>
+
+        <!-- Additional Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <div class="chart-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">أداء المستودعات</h3>
+                <div id="warehousePerformanceChart" style="height: 300px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">حالة الطلبات</h3>
+                <div id="ordersStatusChart" style="height: 300px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">الإيرادات حسب الزبون</h3>
+                <div id="revenueByCustomerChart" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <!-- Report Types Grid -->
+        <div class="reports-grid mb-8">
+            <div class="report-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">تقرير الطلبات</h3>
+                        <p class="text-gray-600 text-sm">تحليل شامل للطلبات والمراحل</p>
+                    </div>
+                    <div class="report-icon bg-gradient-to-r from-blue-500 to-blue-600">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">الطلبات المكتملة:</span>
+                        <span class="font-medium">67</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">متوسط وقت المعالجة:</span>
+                        <span class="font-medium">2.5 ساعة</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">معدل النجاح:</span>
+                        <span class="font-medium text-green-600">94.2%</span>
+                    </div>
+                </div>
+                <button id="orders-report-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 mt-4">
+                    <i class="fas fa-play ml-2"></i>تشغيل التقرير
+                </button>
+            </div>
+
+            <div class="report-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">تقرير المواد</h3>
+                        <p class="text-gray-600 text-sm">تحليل المخزون والمواد</p>
+                    </div>
+                    <div class="report-icon bg-gradient-to-r from-green-500 to-green-600">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">إجمالي المواد:</span>
+                        <span class="font-medium">1,247</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">منخفض المخزون:</span>
+                        <span class="font-medium text-orange-600">23</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">القيمة الإجمالية:</span>
+                        <span class="font-medium">2,450,000 ليرة سورية</span>
+                    </div>
+                </div>
+                <button id="materials-report-btn" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-all duration-200 mt-4">
+                    <i class="fas fa-play ml-2"></i>تشغيل التقرير
+                </button>
+            </div>
+
+            <div class="report-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">تقرير المستودعات</h3>
+                        <p class="text-gray-600 text-sm">أداء واستغلال المستودعات</p>
+                    </div>
+                    <div class="report-icon bg-gradient-to-r from-purple-500 to-purple-600">
+                        <i class="fas fa-warehouse"></i>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">المستودعات النشطة:</span>
+                        <span class="font-medium">8</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">متوسط الاستغلال:</span>
+                        <span class="font-medium">72%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">طلبات الصيانة:</span>
+                        <span class="font-medium text-red-600">3</span>
+                    </div>
+                </div>
+                <button id="warehouse-report-btn" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-all duration-200 mt-4">
+                    <i class="fas fa-play ml-2"></i>تشغيل التقرير
+                </button>
+            </div>
+
+            <div class="report-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">تقرير مالي</h3>
+                        <p class="text-gray-600 text-sm">تحليل الأداء المالي</p>
+                    </div>
+                    <div class="report-icon bg-gradient-to-r from-yellow-500 to-orange-600">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">إجمالي الإيرادات:</span>
+                        <span class="font-medium">125,430 ليرة سورية</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">صافي الربح:</span>
+                        <span class="font-medium text-green-600">18,750 ليرة سورية</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">هامش الربح:</span>
+                        <span class="font-medium">14.9%</span>
+                    </div>
+                </div>
+                <button id="financial-report-btn" class="w-full bg-yellow-600 text-white py-3 rounded-lg hover:bg-yellow-700 transition-all duration-200 mt-4">
+                    <i class="fas fa-play ml-2"></i>تشغيل التقرير
+                </button>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6">خيارات التصدير</h3>
+            <div class="export-options">
+                <div class="export-btn" data-format="pdf">
+                    <div class="export-icon bg-red-100 text-red-600">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div class="font-medium">PDF</div>
+                    <div class="text-xs text-gray-600">ملف PDF</div>
+                </div>
+
+                <div class="export-btn" data-format="excel">
+                    <div class="export-icon bg-green-100 text-green-600">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <div class="font-medium">Excel</div>
+                    <div class="text-xs text-gray-600">جدول بيانات</div>
+                </div>
+
+                <div class="export-btn" data-format="csv">
+                    <div class="export-icon bg-blue-100 text-blue-600">
+                        <i class="fas fa-file-csv"></i>
+                    </div>
+                    <div class="font-medium">CSV</div>
+                    <div class="text-xs text-gray-600">ملف نصي</div>
+                </div>
+
+                <div class="export-btn" data-format="print">
+                    <div class="export-icon bg-gray-100 text-gray-600">
+                        <i class="fas fa-print"></i>
+                    </div>
+                    <div class="font-medium">طباعة</div>
+                    <div class="text-xs text-gray-600">طباعة مباشرة</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPeriod = 'week';
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Initializing reports page...');
+            try {
+                loadAllCharts();
+                setupEventListeners();
+
+                // Add test button to page for debugging
+                const testBtn = document.createElement('button');
+                testBtn.textContent = 'فحص الأزرار';
+                testBtn.className = 'bg-purple-500 text-white px-4 py-2 rounded-lg fixed bottom-4 right-4 z-50';
+                testBtn.addEventListener('click', function() {
+                    debugButtons();
+                });
+                document.body.appendChild(testBtn);
+
+                console.log('Reports page initialized successfully');
+                showMessage('success', 'تم تحميل صفحة التقارير بنجاح - اضغط على "فحص الأزرار" للتشخيص');
+            } catch (error) {
+                console.error('Error initializing reports page:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل صفحة التقارير');
+            }
+        });
+
+        // Add global error handler
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+            showMessage('error', 'حدث خطأ في النظام: ' + e.message);
+        });
+
+        // Test function to verify JavaScript is working
+        window.testJavaScript = function() {
+            console.log('JavaScript is working!');
+            showMessage('success', 'جافا سكريبت يعمل بشكل صحيح');
+        };
+
+        // Debug function to check button status
+        window.debugButtons = function() {
+            console.log('=== Button Debug Info ===');
+
+            // Check period buttons
+            const periodBtns = document.querySelectorAll('.period-btn');
+            console.log('Period buttons:', periodBtns.length);
+            periodBtns.forEach((btn, i) => {
+                console.log(`  Button ${i}:`, btn.textContent.trim(), 'Active:', btn.classList.contains('active'));
+            });
+
+            // Check report buttons
+            const reportBtns = ['orders-report-btn', 'materials-report-btn', 'warehouse-report-btn', 'financial-report-btn'];
+            reportBtns.forEach(id => {
+                const btn = document.getElementById(id);
+                console.log(`Report button ${id}:`, btn ? 'Found' : 'Not found');
+            });
+
+            // Check export buttons
+            const exportBtns = document.querySelectorAll('.export-btn');
+            console.log('Export buttons:', exportBtns.length);
+            exportBtns.forEach((btn, i) => {
+                console.log(`  Export ${i}:`, btn.getAttribute('data-format'));
+            });
+
+            showMessage('info', 'تم فحص الأزرار - راجع وحدة التحكم');
+        };
+
+        function loadAllCharts() {
+            loadMaterialMovementChart();
+            loadMaterialDistributionChart();
+            loadWarehousePerformanceChart();
+            loadOrdersStatusChart();
+            loadRevenueByCustomerChart();
+        }
+
+        function loadMaterialMovementChart(chartType = 'line') {
+            console.log('Loading material movement chart with type:', chartType);
+
+            const data = {
+                x: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+                y: [120, 150, 180, 140, 200, 170],
+                name: 'الكمية (طن)'
+            };
+
+            let plotData;
+
+            if (chartType === 'line') {
+                plotData = [{
+                    ...data,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: { color: '#667eea', width: 3 },
+                    marker: { color: '#667eea', size: 8 }
+                }];
+            } else if (chartType === 'bar') {
+                plotData = [{
+                    ...data,
+                    type: 'bar',
+                    marker: { color: '#667eea' }
+                }];
+            }
+
+            const layout = {
+                title: '',
+                xaxis: { title: 'الشهر' },
+                yaxis: { title: 'الكمية (طن)' },
+                font: { family: 'Cairo, sans-serif' },
+                margin: { t: 20, r: 20, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('materialMovementChart', plotData, layout, {responsive: true});
+        }
+
+        function loadMaterialDistributionChart() {
+            const data = [{
+                values: [45, 30, 15, 10],
+                labels: ['ورق', 'كرتون', 'بلاستيك', 'معدن'],
+                type: 'pie',
+                marker: {
+                    colors: ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6']
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside'
+            }];
+
+            const layout = {
+                title: '',
+                font: { family: 'Cairo, sans-serif' },
+                margin: { t: 20, r: 20, b: 20, l: 20 },
+                showlegend: true
+            };
+
+            Plotly.newPlot('materialDistributionChart', data, layout, {responsive: true});
+        }
+
+        function loadWarehousePerformanceChart() {
+            const data = [{
+                x: ['مستودع 1', 'مستودع 2', 'مستودع 3', 'مستودع 4'],
+                y: [85, 72, 68, 45],
+                type: 'bar',
+                marker: {
+                    color: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b']
+                }
+            }];
+
+            const layout = {
+                title: '',
+                xaxis: { title: 'المستودع' },
+                yaxis: { title: 'نسبة الاستغلال (%)' },
+                font: { family: 'Cairo, sans-serif' },
+                margin: { t: 20, r: 20, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('warehousePerformanceChart', data, layout, {responsive: true});
+        }
+
+        function loadOrdersStatusChart() {
+            const data = [{
+                values: [15, 23, 8, 12, 45],
+                labels: ['قيد الانتظار', 'قيد المعالجة', 'الفرز', 'القص', 'مكتمل'],
+                type: 'pie',
+                marker: {
+                    colors: ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#059669']
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside'
+            }];
+
+            const layout = {
+                title: '',
+                font: { family: 'Cairo, sans-serif' },
+                margin: { t: 20, r: 20, b: 20, l: 20 },
+                showlegend: true
+            };
+
+            Plotly.newPlot('ordersStatusChart', data, layout, {responsive: true});
+        }
+
+        function loadRevenueByCustomerChart() {
+            const data = [{
+                x: ['شركة الأعمال', 'مؤسسة التجارة', 'شركة المقاولات', 'شركة التوريدات', 'مؤسسة الخدمات'],
+                y: [45000, 38000, 32000, 28000, 25000],
+                type: 'bar',
+                marker: {
+                    color: '#8b5cf6'
+                }
+            }];
+
+            const layout = {
+                title: '',
+                xaxis: { title: 'الزبون' },
+                yaxis: { title: 'الإيرادات (ليرة سورية)' },
+                font: { family: 'Cairo, sans-serif' },
+                margin: { t: 20, r: 20, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('revenueByCustomerChart', data, layout, {responsive: true});
+        }
+
+        function setupEventListeners() {
+            console.log('Setting up event listeners...');
+
+            // Ensure all buttons work properly
+            document.querySelectorAll('.period-btn').forEach((btn, index) => {
+                const periods = ['today', 'week', 'month', 'quarter', 'year'];
+                if (periods[index]) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Period button clicked, index:', index, 'period:', periods[index]);
+                        setPeriod(periods[index]);
+                    });
+
+                    // Also ensure onclick attributes are removed to prevent conflicts
+                    btn.removeAttribute('onclick');
+                }
+            });
+
+            // Add a test button to verify JavaScript is working
+            const testBtn = document.createElement('button');
+            testBtn.textContent = 'اختبار الجافا سكريبت';
+            testBtn.className = 'bg-red-500 text-white px-4 py-2 rounded-lg';
+            testBtn.onclick = function() {
+                console.log('Test button clicked');
+                showMessage('success', 'الجافا سكريبت يعمل بشكل صحيح!');
+            };
+
+            // Add test button to the header
+            const headerDiv = document.querySelector('.flex.items-center.justify-between');
+            if (headerDiv) {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'ml-4';
+                testDiv.appendChild(testBtn);
+                headerDiv.appendChild(testDiv);
+            }
+
+            // Add click handlers for export buttons
+            document.querySelectorAll('.export-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const format = this.getAttribute('data-format');
+                    if (format) {
+                        console.log('Export button clicked with format:', format);
+                        exportReport(format);
+                    } else {
+                        console.error('No format attribute found on export button');
+                        showMessage('error', 'خطأ في زر التصدير - لا توجد صيغة محددة');
+                    }
+                });
+
+                // Remove onclick attributes to prevent conflicts
+                btn.removeAttribute('onclick');
+            });
+
+            // Add click handlers for report generation buttons
+            const reportButtons = [
+                { id: 'orders-report-btn', handler: generateOrdersReport },
+                { id: 'materials-report-btn', handler: generateMaterialsReport },
+                { id: 'warehouse-report-btn', handler: generateWarehouseReport },
+                { id: 'financial-report-btn', handler: generateFinancialReport }
+            ];
+
+            reportButtons.forEach(({ id, handler }) => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log(`Report button ${id} clicked`);
+                        handler.call(this, e);
+                    });
+                    console.log(`Added event listener for ${id}`);
+                } else {
+                    console.error(`Button with id ${id} not found`);
+                }
+            });
+
+            // Add click handlers for header buttons
+            const headerButtons = [
+                { id: 'scheduled-reports-btn', handler: showScheduledReports },
+                { id: 'custom-report-btn', handler: showCustomReportModal }
+            ];
+
+            headerButtons.forEach(({ id, handler }) => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log(`Header button ${id} clicked`);
+                        handler.call(this, e);
+                    });
+                    console.log(`Added event listener for header button ${id}`);
+                } else {
+                    console.error(`Header button with id ${id} not found`);
+                }
+            });
+
+            // Add click handlers for chart control buttons
+            const chartButtons = [
+                { id: 'line-chart-btn', handler: () => toggleChartView('line') },
+                { id: 'bar-chart-btn', handler: () => toggleChartView('bar') },
+                { id: 'refresh-chart-btn', handler: refreshChart }
+            ];
+
+            chartButtons.forEach(({ id, handler }) => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log(`Chart button ${id} clicked`);
+                        handler.call(this, e);
+                    });
+                    console.log(`Added event listener for chart button ${id}`);
+                } else {
+                    console.error(`Chart button with id ${id} not found`);
+                }
+            });
+
+            // Add click handlers for material movement buttons
+            const materialButtons = [
+                { id: 'export-material-btn', handler: exportMaterialMovementReport },
+                { id: 'print-material-btn', handler: printMaterialMovementReport }
+            ];
+
+            materialButtons.forEach(({ id, handler }) => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log(`Material button ${id} clicked`);
+                        handler.call(this, e);
+                    });
+                    console.log(`Added event listener for material button ${id}`);
+                } else {
+                    console.error(`Material button with id ${id} not found`);
+                }
+            });
+
+            console.log('All event listeners have been set up successfully');
+        }
+
+        function setPeriod(period) {
+            console.log('setPeriod called with:', period);
+            currentPeriod = period;
+
+            // Update active button
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Find the button that was clicked and make it active
+            const buttons = document.querySelectorAll('.period-btn');
+            buttons.forEach((btn, index) => {
+                const periods = ['today', 'week', 'month', 'quarter', 'year'];
+                if (periods[index] === period) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Reload charts with new period data
+            loadAllCharts();
+
+            showMessage('info', `تم تغيير الفترة إلى: ${getPeriodDisplayName(period)}`);
+        }
+
+        function getPeriodButtonText(period) {
+            const periodMap = {
+                'today': 'اليوم',
+                'week': 'أسبوع',
+                'month': 'شهر',
+                'quarter': 'ربع سنوي',
+                'year': 'سنة'
+            };
+            return periodMap[period] || period;
+        }
+
+        function getPeriodDisplayName(period) {
+            const displayNames = {
+                'today': 'اليوم',
+                'week': 'هذا الأسبوع',
+                'month': 'هذا الشهر',
+                'quarter': 'هذا الربع',
+                'year': 'هذا العام'
+            };
+            return displayNames[period] || period;
+        }
+
+        function toggleChartView(type) {
+            console.log('Toggle chart view to:', type);
+
+            // Update the material movement chart to the selected type
+            if (type === 'line') {
+                loadMaterialMovementChart('line');
+                showMessage('info', 'تم تغيير الرسم البياني إلى الخطوط');
+            } else if (type === 'bar') {
+                loadMaterialMovementChart('bar');
+                showMessage('info', 'تم تغيير الرسم البياني إلى الأعمدة');
+            }
+        }
+
+        function refreshChart() {
+            console.log('Refreshing chart data...');
+            showMessage('info', 'جاري تحديث بيانات الرسم البياني...');
+
+            // Reload charts with new period data
+            loadAllCharts();
+            showMessage('success', 'تم تحديث الرسم البياني بنجاح');
+        }
+
+        function generateOrdersReport() {
+            console.log('Generate orders report clicked');
+            showMessage('info', 'جاري تحضير تقرير الطلبات...');
+
+            setTimeout(async () => {
+                try {
+                    const reportData = await collectOrdersReportData();
+                    console.log('Orders report data collected:', reportData);
+                    await exportReport('print');
+                    showMessage('success', 'تم توليد تقرير الطلبات بنجاح');
+                } catch (error) {
+                    console.error('Generate orders report error:', error);
+                    showMessage('error', 'حدث خطأ أثناء توليد تقرير الطلبات');
+                }
+            }, 100);
+        }
+
+        function generateMaterialsReport() {
+            console.log('Generate materials report clicked');
+            showMessage('info', 'جاري تحضير تقرير المواد...');
+
+            setTimeout(async () => {
+                try {
+                    const reportData = await collectMaterialsReportData();
+                    console.log('Materials report data collected:', reportData);
+                    await exportReport('print');
+                    showMessage('success', 'تم توليد تقرير المواد بنجاح');
+                } catch (error) {
+                    console.error('Generate materials report error:', error);
+                    showMessage('error', 'حدث خطأ أثناء توليد تقرير المواد');
+                }
+            }, 100);
+        }
+
+        function generateWarehouseReport() {
+            console.log('Generate warehouse report clicked');
+            showMessage('info', 'جاري تحضير تقرير المستودعات...');
+
+            setTimeout(async () => {
+                try {
+                    const reportData = await collectWarehouseReportData();
+                    console.log('Warehouse report data collected:', reportData);
+                    await exportReport('print');
+                    showMessage('success', 'تم توليد تقرير المستودعات بنجاح');
+                } catch (error) {
+                    console.error('Generate warehouse report error:', error);
+                    showMessage('error', 'حدث خطأ أثناء توليد تقرير المستودعات');
+                }
+            }, 100);
+        }
+
+        function generateFinancialReport() {
+            console.log('Generate financial report clicked');
+            showMessage('info', 'جاري تحضير التقرير المالي...');
+
+            setTimeout(async () => {
+                try {
+                    const reportData = await collectFinancialReportData();
+                    console.log('Financial report data collected:', reportData);
+                    await exportReport('print');
+                    showMessage('success', 'تم توليد التقرير المالي بنجاح');
+                } catch (error) {
+                    console.error('Generate financial report error:', error);
+                    showMessage('error', 'حدث خطأ أثناء توليد التقرير المالي');
+                }
+            }, 100);
+        }
+
+        async function collectOrdersReportData() {
+            return {
+                metadata: {
+                    title: 'تقرير الطلبات',
+                    period: currentPeriod,
+                    generatedAt: new Date().toLocaleString('ar-SA'),
+                    totalOrders: 67,
+                    completedOrders: 45,
+                    pendingOrders: 22
+                },
+                orders: [
+                    { number: 'ORD-001', customer: 'شركة الأعمال', status: 'مكتمل', amount: 15000, date: '2025-01-15' },
+                    { number: 'ORD-002', customer: 'مؤسسة التجارة', status: 'قيد المعالجة', amount: 22000, date: '2025-01-14' },
+                    { number: 'ORD-003', customer: 'شركة المقاولات', status: 'معلق', amount: 18000, date: '2025-01-13' }
+                ],
+                statusSummary: [
+                    { status: 'مكتمل', count: 45, percentage: 67 },
+                    { status: 'قيد المعالجة', count: 15, percentage: 22 },
+                    { status: 'معلق', count: 7, percentage: 11 }
+                ]
+            };
+        }
+
+        async function collectMaterialsReportData() {
+            return {
+                metadata: {
+                    title: 'تقرير المواد',
+                    period: currentPeriod,
+                    generatedAt: new Date().toLocaleString('ar-SA'),
+                    totalMaterials: 1247,
+                    lowStockItems: 23,
+                    totalValue: 2450000
+                },
+                materials: [
+                    { name: 'ورق أبيض A4', type: 'ورق', quantity: 100, warehouse: 'مستودع رئيسي 1', value: 250000 },
+                    { name: 'ورق كرتون مموج', type: 'كرتون', quantity: 50, warehouse: 'مستودع رئيسي 1', value: 320000 },
+                    { name: 'بلاستيك شفاف', type: 'بلاستيك', quantity: 75, warehouse: 'مستودع رئيسي 2', value: 180000 }
+                ],
+                typeSummary: [
+                    { type: 'ورق', count: 450, totalValue: 1250000 },
+                    { type: 'كرتون', count: 300, totalValue: 800000 },
+                    { type: 'بلاستيك', count: 150, totalValue: 300000 },
+                    { type: 'معدن', count: 100, totalValue: 100000 }
+                ]
+            };
+        }
+
+        async function collectWarehouseReportData() {
+            return {
+                metadata: {
+                    title: 'تقرير المستودعات',
+                    period: currentPeriod,
+                    generatedAt: new Date().toLocaleString('ar-SA'),
+                    totalWarehouses: 8,
+                    activeWarehouses: 8,
+                    avgUtilization: 72
+                },
+                warehouses: [
+                    { name: 'مستودع رئيسي 1', type: 'رئيسي', utilization: 85, capacity: 500, materials: 200, manager: 'أحمد محمد' },
+                    { name: 'مستودع رئيسي 2', type: 'رئيسي', utilization: 72, capacity: 400, materials: 180, manager: 'فاطمة علي' },
+                    { name: 'مستودع قصاصة 1', type: 'قصاصة', utilization: 68, capacity: 200, materials: 150, manager: 'محمد حسن' }
+                ],
+                maintenanceRequests: [
+                    { warehouse: 'مستودع رئيسي 1', title: 'صيانة نظام التكييف', priority: 'عالية', status: 'معلق' },
+                    { warehouse: 'مستودع قصاصة 2', title: 'إصلاح أرضية المستودع', priority: 'متوسطة', status: 'قيد التنفيذ' }
+                ]
+            };
+        }
+
+        async function collectFinancialReportData() {
+            return {
+                metadata: {
+                    title: 'التقرير المالي',
+                    period: currentPeriod,
+                    generatedAt: new Date().toLocaleString('ar-SA'),
+                    totalRevenue: 125430,
+                    totalProfit: 18750,
+                    profitMargin: 14.9
+                },
+                revenue: [
+                    { month: 'يناير', amount: 15000, profit: 2250 },
+                    { month: 'فبراير', amount: 22000, profit: 3300 },
+                    { month: 'مارس', amount: 18000, profit: 2700 },
+                    { month: 'أبريل', amount: 25000, profit: 3750 },
+                    { month: 'مايو', amount: 28000, profit: 4200 },
+                    { month: 'يونيو', amount: 16500, profit: 2475 }
+                ],
+                expenses: [
+                    { category: 'رواتب الموظفين', amount: 45000 },
+                    { category: 'صيانة المعدات', amount: 15000 },
+                    { category: 'فواتير الكهرباء', amount: 25000 },
+                    { category: 'مواد التشغيل', amount: 18000 }
+                ]
+            };
+        }
+
+        function showScheduledReports() {
+            console.log('Show scheduled reports clicked');
+            showMessage('info', 'عرض التقارير المجدولة - هذه الميزة قيد التطوير وسيتم إضافتها قريباً');
+        }
+
+        function showCustomReportModal() {
+            console.log('Show custom report modal clicked');
+            showMessage('info', 'إنشاء تقرير مخصص - هذه الميزة قيد التطوير وسيتم إضافتها قريباً');
+        }
+
+        function exportReport(format) {
+            console.log('exportReport called with format:', format);
+            showMessage('info', `جاري تحضير التقرير للتصدير بصيغة ${format}...`);
+
+            setTimeout(async () => {
+                try {
+                    console.log('Starting export with format:', format);
+
+                    // Collect data for export
+                    const reportData = await collectReportData();
+                    console.log('Report data collected:', reportData);
+
+                    switch(format) {
+                        case 'pdf':
+                            await exportToPDF(reportData);
+                            break;
+                        case 'excel':
+                            await exportToExcel(reportData);
+                            break;
+                        case 'csv':
+                            await exportToCSV(reportData);
+                            break;
+                        case 'print':
+                            await printReport(reportData);
+                            break;
+                        default:
+                            showMessage('error', 'صيغة التصدير غير مدعومة');
+                    }
+                } catch (error) {
+                    console.error('Export error:', error);
+                    showMessage('error', 'حدث خطأ أثناء التصدير');
+                }
+            }, 100);
+        }
+
+        async function collectReportData() {
+            const data = {
+                metadata: {
+                    title: 'تقرير حركة المواد الشامل',
+                    period: currentPeriod,
+                    generatedAt: new Date().toLocaleString('ar-SA'),
+                    totalMaterials: 1247,
+                    totalWeight: 892,
+                    totalValue: 2450000
+                },
+                materialMovement: [
+                    { month: 'يناير', incoming: 120, outgoing: 100, net: 20 },
+                    { month: 'فبراير', incoming: 150, outgoing: 130, net: 20 },
+                    { month: 'مارس', incoming: 180, outgoing: 160, net: 20 },
+                    { month: 'أبريل', incoming: 140, outgoing: 120, net: 20 },
+                    { month: 'مايو', incoming: 200, outgoing: 180, net: 20 },
+                    { month: 'يونيو', incoming: 170, outgoing: 150, net: 20 }
+                ],
+                materialTypes: [
+                    { type: 'ورق', count: 450, weight: 200, value: 1250000 },
+                    { type: 'كرتون', count: 300, weight: 400, value: 800000 },
+                    { type: 'بلاستيك', count: 150, weight: 150, value: 300000 },
+                    { type: 'معدن', count: 100, weight: 142, value: 100000 }
+                ],
+                warehouses: [
+                    { name: 'مستودع رئيسي 1', utilization: 85, materials: 200, value: 500000 },
+                    { name: 'مستودع رئيسي 2', utilization: 72, materials: 180, value: 450000 },
+                    { name: 'مستودع قصاصة 1', utilization: 68, materials: 150, value: 380000 },
+                    { name: 'مستودع قصاصة 2', utilization: 45, materials: 120, value: 300000 }
+                ]
+            };
+
+            return data;
+        }
+
+        function exportToPDF(data) {
+            return new Promise((resolve) => {
+                console.log('Starting PDF export...');
+                showMessage('info', 'جاري إنشاء ملف PDF...');
+
+                // Create a new window for PDF content
+                const printWindow = window.open('', '_blank');
+                const content = generatePDFContent(data);
+
+                printWindow.document.write(content);
+                printWindow.document.close();
+
+                // Wait for content to load then print
+                printWindow.onload = function() {
+                    try {
+                        printWindow.print();
+                        printWindow.close();
+                        showMessage('success', 'تم تصدير التقرير بصيغة PDF بنجاح');
+                    } catch (error) {
+                        console.error('PDF export error:', error);
+                        showMessage('error', 'حدث خطأ أثناء تصدير PDF');
+                    }
+                    resolve();
+                };
+
+                // Fallback in case onload doesn't trigger
+                setTimeout(() => {
+                    try {
+                        printWindow.print();
+                        printWindow.close();
+                        showMessage('success', 'تم تصدير التقرير بصيغة PDF بنجاح');
+                    } catch (error) {
+                        console.error('PDF export error:', error);
+                        showMessage('error', 'حدث خطأ أثناء تصدير PDF');
+                    }
+                    resolve();
+                }, 2000);
+            });
+        }
+
+        function exportToExcel(data) {
+            return new Promise((resolve) => {
+                console.log('Starting Excel export...');
+                showMessage('info', 'جاري إنشاء ملف Excel...');
+
+                // Create CSV content (can be enhanced to actual Excel later)
+                let csvContent = 'تقرير حركة المواد\n\n';
+                csvContent += `الفترة: ${data.metadata.period}\n`;
+                csvContent += `تاريخ الإنشاء: ${data.metadata.generatedAt}\n\n`;
+
+                // Material Movement Data
+                csvContent += 'حركة المواد الشهرية\n';
+                csvContent += 'الشهر,الوارد,الصادر,الصافي\n';
+                data.materialMovement.forEach(item => {
+                    csvContent += `${item.month},${item.incoming},${item.outgoing},${item.net}\n`;
+                });
+
+                csvContent += '\nأنواع المواد\n';
+                csvContent += 'النوع,العدد,الوزن,القيمة\n';
+                data.materialTypes.forEach(item => {
+                    csvContent += `${item.type},${item.count},${item.weight},${item.value}\n`;
+                });
+
+                // Create and download file
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `material_report_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showMessage('success', 'تم تصدير التقرير بصيغة Excel بنجاح');
+                resolve();
+            });
+        }
+
+        function exportToCSV(data) {
+            return new Promise((resolve) => {
+                console.log('Starting CSV export...');
+                showMessage('info', 'جاري إنشاء ملف CSV...');
+
+                let csvContent = '';
+
+                // Material Movement Data
+                csvContent += 'حركة المواد الشهرية\n';
+                csvContent += 'الشهر,الوارد,الصادر,الصافي\n';
+                data.materialMovement.forEach(item => {
+                    csvContent += `${item.month},${item.incoming},${item.outgoing},${item.net}\n`;
+                });
+
+                csvContent += '\nأنواع المواد\n';
+                csvContent += 'النوع,العدد,الوزن,القيمة\n';
+                data.materialTypes.forEach(item => {
+                    csvContent += `${item.type},${item.count},${item.weight},${item.value}\n`;
+                });
+
+                // Create and download file
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `material_report_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showMessage('success', 'تم تصدير التقرير بصيغة CSV بنجاح');
+                resolve();
+            });
+        }
+
+        function printReport(data) {
+            return new Promise((resolve) => {
+                console.log('Starting print...');
+                showMessage('info', 'جاري التحضير للطباعة...');
+
+                const printWindow = window.open('', '_blank');
+                const content = generatePrintContent(data);
+
+                printWindow.document.write(content);
+                printWindow.document.close();
+
+                printWindow.onload = function() {
+                    try {
+                        printWindow.print();
+                        printWindow.close();
+                        showMessage('success', 'تم إرسال التقرير للطباعة بنجاح');
+                    } catch (error) {
+                        console.error('Print error:', error);
+                        showMessage('error', 'حدث خطأ أثناء الطباعة');
+                    }
+                    resolve();
+                };
+
+                // Fallback in case onload doesn't trigger
+                setTimeout(() => {
+                    try {
+                        printWindow.print();
+                        printWindow.close();
+                        showMessage('success', 'تم إرسال التقرير للطباعة بنجاح');
+                    } catch (error) {
+                        console.error('Print error:', error);
+                        showMessage('error', 'حدث خطأ أثناء الطباعة');
+                    }
+                    resolve();
+                }, 2000);
+            });
+        }
+
+        function generatePDFContent(data) {
+            return `
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>تقرير حركة المواد</title>
+                    <style>
+                        body {
+                            font-family: 'Cairo', sans-serif;
+                            margin: 20px;
+                            direction: rtl;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 20px;
+                        }
+                        .section {
+                            margin: 20px 0;
+                        }
+                        .section-title {
+                            font-size: 18px;
+                            font-weight: bold;
+                            margin: 15px 0;
+                            color: #333;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin: 10px 0;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: right;
+                        }
+                        th {
+                            background-color: #f5f5f5;
+                            font-weight: bold;
+                        }
+                        .summary {
+                            background-color: #f9f9f9;
+                            padding: 15px;
+                            border-radius: 5px;
+                            margin: 15px 0;
+                        }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>تقرير حركة المواد الشامل</h1>
+                        <p>الفترة: ${data.metadata.period} | تاريخ الإنشاء: ${data.metadata.generatedAt}</p>
+                    </div>
+
+                    <div class="summary">
+                        <h3>ملخص التقرير</h3>
+                        <p>إجمالي المواد: ${data.metadata.totalMaterials}</p>
+                        <p>إجمالي الوزن: ${data.metadata.totalWeight} طن</p>
+                        <p>القيمة الإجمالية: ${data.metadata.totalValue.toLocaleString()} ليرة سورية</p>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">حركة المواد الشهرية</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الشهر</th>
+                                    <th>الوارد</th>
+                                    <th>الصادر</th>
+                                    <th>الصافي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.materialMovement.map(item => `
+                                    <tr>
+                                        <td>${item.month}</td>
+                                        <td>${item.incoming}</td>
+                                        <td>${item.outgoing}</td>
+                                        <td>${item.net}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">أنواع المواد</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>النوع</th>
+                                    <th>العدد</th>
+                                    <th>الوزن (طن)</th>
+                                    <th>القيمة (ليرة سورية)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.materialTypes.map(item => `
+                                    <tr>
+                                        <td>${item.type}</td>
+                                        <td>${item.count}</td>
+                                        <td>${item.weight}</td>
+                                        <td>${item.value.toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">أداء المستودعات</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>المستودع</th>
+                                    <th>نسبة الاستغلال</th>
+                                    <th>عدد المواد</th>
+                                    <th>القيمة (ليرة سورية)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.warehouses.map(item => `
+                                    <tr>
+                                        <td>${item.name}</td>
+                                        <td>${item.utilization}%</td>
+                                        <td>${item.materials}</td>
+                                        <td>${item.value.toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
+                        تم إنشاء هذا التقرير بواسطة نظام إدارة المستودعات المتكامل
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        function generatePrintContent(data) {
+            return `
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>طباعة تقرير حركة المواد</title>
+                    <style>
+                        body {
+                            font-family: 'Cairo', sans-serif;
+                            margin: 20px;
+                            direction: rtl;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 2px solid #333;
+                            padding-bottom: 20px;
+                        }
+                        .section {
+                            margin: 20px 0;
+                        }
+                        .section-title {
+                            font-size: 18px;
+                            font-weight: bold;
+                            margin: 15px 0;
+                            color: #333;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin: 10px 0;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: right;
+                        }
+                        th {
+                            background-color: #f5f5f5;
+                            font-weight: bold;
+                        }
+                        .summary {
+                            background-color: #f9f9f9;
+                            padding: 15px;
+                            border-radius: 5px;
+                            margin: 15px 0;
+                        }
+                        @media print {
+                            body { margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>تقرير حركة المواد الشامل</h1>
+                        <p>الفترة: ${data.metadata.period} | تاريخ الإنشاء: ${data.metadata.generatedAt}</p>
+                    </div>
+
+                    <div class="summary">
+                        <h3>ملخص التقرير</h3>
+                        <p>إجمالي المواد: ${data.metadata.totalMaterials}</p>
+                        <p>إجمالي الوزن: ${data.metadata.totalWeight} طن</p>
+                        <p>القيمة الإجمالية: ${data.metadata.totalValue.toLocaleString()} ليرة سورية</p>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">حركة المواد الشهرية</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الشهر</th>
+                                    <th>الوارد</th>
+                                    <th>الصادر</th>
+                                    <th>الصافي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.materialMovement.map(item => `
+                                    <tr>
+                                        <td>${item.month}</td>
+                                        <td>${item.incoming}</td>
+                                        <td>${item.outgoing}</td>
+                                        <td>${item.net}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">أنواع المواد</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>النوع</th>
+                                    <th>العدد</th>
+                                    <th>الوزن (طن)</th>
+                                    <th>القيمة (ليرة سورية)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.materialTypes.map(item => `
+                                    <tr>
+                                        <td>${item.type}</td>
+                                        <td>${item.count}</td>
+                                        <td>${item.weight}</td>
+                                        <td>${item.value.toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">أداء المستودعات</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>المستودع</th>
+                                    <th>نسبة الاستغلال</th>
+                                    <th>عدد المواد</th>
+                                    <th>القيمة (ليرة سورية)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.warehouses.map(item => `
+                                    <tr>
+                                        <td>${item.name}</td>
+                                        <td>${item.utilization}%</td>
+                                        <td>${item.materials}</td>
+                                        <td>${item.value.toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #666;">
+                        تم إنشاء هذا التقرير بواسطة نظام إدارة المستودعات المتكامل
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        function exportMaterialMovementReport() {
+            console.log('Starting material movement export...');
+            showMessage('info', 'جاري تحضير بيانات حركة المواد للتصدير...');
+
+            setTimeout(async () => {
+                try {
+                    const format = await selectExportFormat();
+                    if (format) {
+                        const reportData = await collectReportData();
+                        await exportReport(format);
+                    }
+                } catch (error) {
+                    console.error('Export material movement error:', error);
+                    showMessage('error', 'حدث خطأ أثناء تصدير بيانات حركة المواد');
+                }
+            }, 100);
+        }
+
+        function printMaterialMovementReport() {
+            console.log('Starting material movement print...');
+            showMessage('info', 'جاري تحضير تقرير حركة المواد للطباعة...');
+
+            setTimeout(async () => {
+                try {
+                    const reportData = await collectReportData();
+                    await printReport(reportData);
+                    showMessage('success', 'تم إرسال تقرير حركة المواد للطباعة بنجاح');
+                } catch (error) {
+                    console.error('Print material movement error:', error);
+                    showMessage('error', 'حدث خطأ أثناء طباعة تقرير حركة المواد');
+                }
+            }, 100);
+        }
+
+        function selectExportFormat() {
+            return new Promise((resolve) => {
+                console.log('Opening export format selector...');
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-lg p-6 max-w-sm mx-4" style="font-family: 'Cairo', sans-serif;">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">اختر صيغة التصدير</h3>
+                        <div class="space-y-3">
+                            <button class="export-option w-full text-left p-3 rounded-lg hover:bg-gray-100" data-format="pdf">
+                                <i class="fas fa-file-pdf text-red-600 ml-2"></i>
+                                تصدير PDF
+                            </button>
+                            <button class="export-option w-full text-left p-3 rounded-lg hover:bg-gray-100" data-format="excel">
+                                <i class="fas fa-file-excel text-green-600 ml-2"></i>
+                                تصدير Excel
+                            </button>
+                            <button class="export-option w-full text-left p-3 rounded-lg hover:bg-gray-100" data-format="csv">
+                                <i class="fas fa-file-csv text-blue-600 ml-2"></i>
+                                تصدير CSV
+                            </button>
+                            <button class="export-option w-full text-left p-3 rounded-lg hover:bg-gray-100" data-format="print">
+                                <i class="fas fa-print text-gray-600 ml-2"></i>
+                                طباعة
+                            </button>
+                        </div>
+                        <div class="flex justify-end mt-6 space-x-3">
+                            <button id="cancel-export-btn" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                                إلغاء
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                // Add event listeners for export options
+                modal.querySelectorAll('.export-option').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const format = this.getAttribute('data-format');
+                        console.log('Export option selected:', format);
+                        document.body.removeChild(modal);
+                        resolve(format);
+                    });
+                });
+
+                // Close modal function
+                const cancelBtn = modal.querySelector('#cancel-export-btn');
+                cancelBtn.addEventListener('click', function() {
+                    console.log('Export cancelled');
+                    document.body.removeChild(modal);
+                    resolve(null);
+                });
+
+                // Close modal when clicking outside
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        console.log('Modal clicked outside');
+                        document.body.removeChild(modal);
+                        resolve(null);
+                    }
+                });
+            });
+        }
+
+        function showMessage(type, message) {
+            console.log(`Message (${type}):`, message);
+
+            // Create a better message display
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg text-white z-50 transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500' :
+                type === 'error' ? 'bg-red-500' :
+                'bg-blue-500'
+            }`;
+            messageDiv.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} ml-2"></i>
+                    ${message}
+                </div>
+            `;
+
+            document.body.appendChild(messageDiv);
+
+            // Remove message after 3 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    document.body.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+
+        // Add a simple test function to verify everything is working
+        function testAllButtons() {
+            console.log('Testing all buttons...');
+
+            // Test period buttons
+            const periodBtns = document.querySelectorAll('.period-btn');
+            console.log('Found period buttons:', periodBtns.length);
+
+            // Test report buttons
+            const reportBtns = ['orders-report-btn', 'materials-report-btn', 'warehouse-report-btn', 'financial-report-btn'];
+            reportBtns.forEach(id => {
+                const btn = document.getElementById(id);
+                console.log(`Button ${id}:`, btn ? 'Found' : 'Not found');
+            });
+
+            // Test export buttons
+            const exportBtns = document.querySelectorAll('.export-btn');
+            console.log('Found export buttons:', exportBtns.length);
+
+            showMessage('info', 'تم فحص جميع الأزرار - تحقق من وحدة التحكم');
+        }
+
+        // Make test functions globally available
+        window.testAllButtons = testAllButtons;
+        window.debugButtons = debugButtons;
+
+        // Add a simple test function to verify everything is working
+        function testAllButtons() {
+            console.log('Testing all buttons...');
+
+            // Test period buttons
+            const periodBtns = document.querySelectorAll('.period-btn');
+            console.log('Found period buttons:', periodBtns.length);
+
+            // Test report buttons
+            const reportBtns = ['orders-report-btn', 'materials-report-btn', 'warehouse-report-btn', 'financial-report-btn'];
+            reportBtns.forEach(id => {
+                const btn = document.getElementById(id);
+                console.log(`Button ${id}:`, btn ? 'Found' : 'Not found');
+            });
+
+            // Test export buttons
+            const exportBtns = document.querySelectorAll('.export-btn');
+            console.log('Found export buttons:', exportBtns.length);
+
+            showMessage('info', 'تم فحص جميع الأزرار - تحقق من وحدة التحكم');
+        }
+
+        // Make test functions globally available
+        window.testAllButtons = testAllButtons;
+        window.debugButtons = debugButtons;
+    </script>
+</body>
+</html>

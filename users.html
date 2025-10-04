@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة المستخدمين المتقدم - إدارة المستودعات</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 50%, #06d6a0 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #f97316 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #ef4444 100%);
+            --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+        }
+
+        .modern-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15), 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .role-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .btn-modern {
+            border-radius: 16px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-modern:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .modal-modern {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content-modern {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 32px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 85vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .input-modern {
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 16px;
+            padding: 16px 20px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: rgba(248, 250, 252, 0.5);
+        }
+
+        .input-modern:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .permissions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .permission-card {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .permission-card:hover {
+            background: #f1f5f9;
+            transform: translateY(-2px);
+        }
+
+        .permission-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: #667eea;
+        }
+
+        .activity-timeline {
+            position: relative;
+            padding-right: 40px;
+        }
+
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            right: 20px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .activity-dot {
+            position: absolute;
+            right: -28px;
+            top: 20px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 0 0 3px #e5e7eb;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 24px;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .user-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .user-status {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .modal-xl {
+            max-width: 1200px;
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .activity-timeline {
+            position: relative;
+            padding-right: 30px;
+        }
+
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            right: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .activity-dot {
+            position: absolute;
+            right: -22px;
+            top: 16px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+
+        .permissions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .permission-item {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .permission-item:hover {
+            background: #f1f5f9;
+        }
+
+        .permission-checkbox {
+            margin-left: 8px;
+        }
+
+        .user-form {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .form-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .security-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .security-high {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .security-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .security-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .session-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .bulk-actions {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+        }
+
+        .role-description {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        /* Mobile Responsive Improvements */
+        @media (max-width: 640px) {
+            .container {
+                padding: 16px;
+            }
+
+            .modern-card {
+                padding: 20px;
+            }
+
+            .user-avatar {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .users-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .permissions-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .permission-card {
+                padding: 16px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .form-section {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            .user-form {
+                padding: 20px;
+            }
+
+            .activity-timeline {
+                padding-right: 20px;
+            }
+
+            .activity-dot {
+                right: -18px;
+                width: 12px;
+                height: 12px;
+            }
+
+            .bulk-actions {
+                padding: 12px;
+                margin-bottom: 16px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="container mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">نظام إدارة المستخدمين المتقدم</h1>
+                    <p class="text-gray-600">إدارة شاملة للمستخدمين والصلاحيات والأنشطة</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="exportUsersData()" class="btn-modern bg-gradient-to-r from-purple-500 to-blue-600 text-white">
+                        <i class="fas fa-download ml-2"></i>تصدير البيانات
+                    </button>
+                    <button onclick="showPermissionsManager()" class="btn-modern bg-gradient-to-r from-orange-500 to-red-600 text-white">
+                        <i class="fas fa-shield-alt ml-2"></i>إدارة الصلاحيات
+                    </button>
+                    <button onclick="showAddUserModal()" class="btn-modern btn-success">
+                        <i class="fas fa-plus ml-2"></i>إضافة مستخدم جديد
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add User Modal -->
+        <div id="addUserModal" class="fixed inset-0 z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="absolute inset-0 bg-black opacity-50"></div>
+                <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-t-2xl">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-2xl font-bold">إضافة مستخدم جديد</h3>
+                            <div class="flex items-center space-x-3">
+                                <button onclick="goBackFromModal('addUserModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-arrow-right text-lg"></i>
+                                </button>
+                                <button onclick="closeAddUserModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="addUserForm" onsubmit="saveNewUser(event)" class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Basic Information -->
+                            <div class="md:col-span-2">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-4">المعلومات الأساسية</h4>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستخدم *</label>
+                                <input type="text" id="username" name="username" required class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">الاسم الكامل *</label>
+                                <input type="text" id="fullName" name="name" required class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">البريد الإلكتروني</label>
+                                <input type="email" id="email" name="email" class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف</label>
+                                <input type="tel" id="phone" name="phone" class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">نوع المستخدم *</label>
+                                <select id="userType" name="user_type" required class="input-modern w-full">
+                                    <option value="">اختر نوع المستخدم</option>
+                                    <option value="admin">مدير النظام</option>
+                                    <option value="warehouse_manager">أمين المستودع</option>
+                                    <option value="cutting_manager">مسؤول القص</option>
+                                    <option value="sorting_manager">مسؤول الفرز</option>
+                                    <option value="accountant">المحاسب</option>
+                                    <option value="order_tracker">متابع الطلبات</option>
+                                    <option value="delivery_manager">مسؤول التسليم</option>
+                                    <option value="sales">موظف المبيعات</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">كلمة المرور المؤقتة *</label>
+                                <input type="password" id="tempPassword" name="password" required minlength="6" class="input-modern w-full">
+                            </div>
+
+                            <!-- Permissions Section -->
+                            <div class="md:col-span-2">
+                                <h4 class="text-lg font-semibold text-gray-800 mb-4">الصلاحيات</h4>
+                                <div class="permissions-grid">
+                                    <div class="permission-card">
+                                        <h5 class="font-medium text-gray-800 mb-3">إدارة المستخدمين</h5>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="permission-checkbox" value="manage_users">
+                                            <span class="mr-2 text-sm">إدارة المستخدمين</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="permission-card">
+                                        <h5 class="font-medium text-gray-800 mb-3">إدارة المستودعات</h5>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="permission-checkbox" value="manage_warehouses">
+                                            <span class="mr-2 text-sm">إدارة المستودعات</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="permission-card">
+                                        <h5 class="font-medium text-gray-800 mb-3">إدارة المواد</h5>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="permission-checkbox" value="manage_materials">
+                                            <span class="mr-2 text-sm">إدارة المواد</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="permission-card">
+                                        <h5 class="font-medium text-gray-800 mb-3">إدارة الطلبات</h5>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="permission-checkbox" value="manage_orders">
+                                            <span class="mr-2 text-sm">إدارة الطلبات</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="permission-card">
+                                        <h5 class="font-medium text-gray-800 mb-3">إدارة الفواتير</h5>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="permission-checkbox" value="manage_invoices">
+                                            <span class="mr-2 text-sm">إدارة الفواتير</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="permission-card">
+                                        <h5 class="font-medium text-gray-800 mb-3">عرض التقارير</h5>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" class="permission-checkbox" value="view_reports">
+                                            <span class="mr-2 text-sm">عرض التقارير</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="md:col-span-2 flex space-x-4">
+                                <button type="submit" class="btn-modern btn-success flex-1">
+                                    <i class="fas fa-save ml-2"></i>إنشاء المستخدم
+                                </button>
+                                <button type="button" onclick="closeAddUserModal()" class="btn-modern bg-gray-600 text-white">
+                                    <i class="fas fa-times ml-2"></i>إلغاء
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">إجمالي المستخدمين</p>
+                        <p class="text-3xl font-bold text-gray-800" id="totalUsers">0</p>
+                        <p class="text-blue-600 text-sm mt-1">
+                            <i class="fas fa-users ml-1"></i>جميع المستخدمين
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">المستخدمين النشطين</p>
+                        <p class="text-3xl font-bold text-gray-800" id="activeUsers">0</p>
+                        <p class="text-green-600 text-sm mt-1">
+                            <i class="fas fa-user-check ml-1"></i>متصلين بالنظام
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user-check text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">غير نشطين</p>
+                        <p class="text-3xl font-bold text-gray-800" id="inactiveUsers">0</p>
+                        <p class="text-gray-600 text-sm mt-1">
+                            <i class="fas fa-user-times ml-1"></i>حسابات معطلة
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user-times text-gray-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">جدد اليوم</p>
+                        <p class="text-3xl font-bold text-gray-800" id="newUsersToday">0</p>
+                        <p class="text-purple-600 text-sm mt-1">
+                            <i class="fas fa-user-plus ml-1"></i>انضمام جديد
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user-plus text-purple-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">متصلين الآن</p>
+                        <p class="text-3xl font-bold text-gray-800" id="onlineUsers">0</p>
+                        <p class="text-orange-600 text-sm mt-1">
+                            <i class="fas fa-circle ml-1"></i>نشطاء حالياً
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-circle text-orange-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">محاولات فاشلة</p>
+                        <p class="text-3xl font-bold text-gray-800" id="failedLogins">0</p>
+                        <p class="text-red-600 text-sm mt-1">
+                            <i class="fas fa-exclamation-triangle ml-1"></i>أنشطة مشبوهة
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Charts and Filters -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Charts -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="modern-card">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-6">توزيع المستخدمين حسب الدور</h3>
+                    <div id="userRolesChart" style="height: 350px;"></div>
+                </div>
+
+                <div class="modern-card">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-6">نشاط المستخدمين</h3>
+                    <div id="userActivityChart" style="height: 350px;"></div>
+                </div>
+            </div>
+
+            <!-- Filters and Quick Actions -->
+            <div class="space-y-6">
+                <!-- Search and Filter -->
+                <div class="modern-card">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">البحث والفلترة</h3>
+                    <div class="space-y-4">
+                        <input type="text" id="userSearch" placeholder="البحث في المستخدمين..." class="input-modern w-full" onkeyup="filterUsers()">
+
+                        <select id="roleFilter" class="input-modern w-full" onchange="filterUsers()">
+                            <option value="">جميع الأدوار</option>
+                            <option value="admin">مدير النظام</option>
+                            <option value="warehouse_manager">أمين المستودع</option>
+                            <option value="cutting_manager">مسؤول القص</option>
+                            <option value="sorting_manager">مسؤول الفرز</option>
+                            <option value="accountant">المحاسب</option>
+                            <option value="order_tracker">متابع الطلبات</option>
+                            <option value="delivery_manager">مسؤول التسليم</option>
+                            <option value="sales">موظف المبيعات</option>
+                        </select>
+
+                        <select id="statusFilter" class="input-modern w-full" onchange="filterUsers()">
+                            <option value="">جميع الحالات</option>
+                            <option value="true">نشط</option>
+                            <option value="false">غير نشط</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="modern-card">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">إجراءات سريعة</h3>
+                    <div class="space-y-3">
+                        <button onclick="showAddUserModal()" class="btn-modern btn-success w-full text-left">
+                            <i class="fas fa-plus ml-3"></i>
+                            إضافة مستخدم جديد
+                        </button>
+                        <button onclick="showBulkActionsModal()" class="btn-modern bg-gradient-to-r from-orange-500 to-red-600 text-white w-full text-left">
+                            <i class="fas fa-users-cog ml-3"></i>
+                            العمليات المجمعة
+                        </button>
+                        <button onclick="exportUsersData()" class="btn-modern bg-gradient-to-r from-purple-500 to-blue-600 text-white w-full text-left">
+                            <i class="fas fa-download ml-3"></i>
+                            تصدير البيانات
+                        </button>
+                        <button onclick="showPermissionsManager()" class="btn-modern bg-gradient-to-r from-indigo-500 to-purple-600 text-white w-full text-left">
+                            <i class="fas fa-shield-alt ml-3"></i>
+                            إدارة الصلاحيات
+                        </button>
+                    </div>
+                </div>
+
+                <!-- User Statistics Summary -->
+                <div class="modern-card">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">إحصائيات سريعة</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">المديرين:</span>
+                            <span class="font-medium" id="adminCount">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">أمناء المستودعات:</span>
+                            <span class="font-medium" id="warehouseManagerCount">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">مسؤولي القص:</span>
+                            <span class="font-medium" id="cuttingManagerCount">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600">المحاسبين:</span>
+                            <span class="font-medium" id="accountantCount">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Management -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Users List -->
+            <div class="lg:col-span-2">
+                <div class="modern-card">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-semibold text-gray-800">قائمة المستخدمين</h3>
+                            <div class="flex space-x-4">
+                                <button onclick="toggleAllUsers()" class="btn-modern btn-primary">
+                                    <i class="fas fa-check-square ml-2"></i>تحديد الكل
+                                </button>
+                                <div class="relative">
+                                    <button onclick="toggleBulkMenu()" class="btn-modern bg-gray-600 text-white">
+                                        <i class="fas fa-cogs ml-2"></i>عمليات مجمعة
+                                    </button>
+                                    <div id="bulkMenu" class="absolute left-0 mt-3 w-56 bg-white rounded-xl shadow-xl hidden z-20 border">
+                                        <div class="py-2">
+                                            <button onclick="bulkEditUsers()" class="block w-full text-right px-4 py-3 text-sm text-gray-700 hover:bg-gray-100">
+                                                <i class="fas fa-edit ml-2"></i>تعديل مجمع
+                                            </button>
+                                            <button onclick="bulkChangeStatus()" class="block w-full text-right px-4 py-3 text-sm text-gray-700 hover:bg-gray-100">
+                                                <i class="fas fa-toggle-on ml-2"></i>تغيير الحالة
+                                            </button>
+                                            <button onclick="bulkResetPasswords()" class="block w-full text-right px-4 py-3 text-sm text-gray-700 hover:bg-gray-100">
+                                                <i class="fas fa-key ml-2"></i>إعادة تعيين كلمات المرور
+                                            </button>
+                                            <button onclick="bulkDeleteUsers()" class="block w-full text-right px-4 py-3 text-sm text-red-600 hover:bg-gray-100">
+                                                <i class="fas fa-trash ml-2"></i>حذف المحدد
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b">
+                                        <th class="text-right py-4 px-6 font-medium text-gray-700">
+                                            <input type="checkbox" id="selectAllUsers" onchange="toggleAllUsers()">
+                                        </th>
+                                        <th class="text-right py-4 px-6 font-medium text-gray-700">المستخدم</th>
+                                        <th class="text-right py-4 px-6 font-medium text-gray-700">الدور</th>
+                                        <th class="text-right py-4 px-6 font-medium text-gray-700">الحالة</th>
+                                        <th class="text-right py-4 px-6 font-medium text-gray-700">آخر دخول</th>
+                                        <th class="text-right py-4 px-6 font-medium text-gray-700">تاريخ الإنشاء</th>
+                                        <th class="text-right py-4 px-6 font-medium text-gray-700">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center py-12">
+                                            <div class="loading-overlay">
+                                                <div>
+                                                    <div class="loading-spinner mx-auto mb-4"></div>
+                                                    <p class="loading-text">جاري تحميل بيانات المستخدمين...</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Timeline -->
+            <div>
+                <div class="modern-card mb-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-6">الأنشطة الأخيرة</h3>
+                    <div class="activity-timeline" id="recentActivities">
+                        <div class="relative">
+                            <div class="activity-dot bg-green-500"></div>
+                            <div class="bg-green-50 rounded-lg p-4 mb-4">
+                                <p class="font-medium text-gray-800">جاري تحميل الأنشطة...</p>
+                                <p class="text-sm text-gray-600">يرجى الانتظار</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Role Distribution -->
+                <div class="modern-card">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">توزيع الأدوار</h3>
+                    <div class="space-y-3" id="roleDistribution">
+                        <!-- Role distribution will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Actions Modal -->
+        <div id="bulkActionsModal" class="fixed inset-0 z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="absolute inset-0 bg-black opacity-50"></div>
+                <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="bg-gradient-to-r from-orange-500 to-red-600 text-white p-6 rounded-t-2xl">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-2xl font-bold">العمليات المجمعة</h3>
+                            <div class="flex items-center space-x-3">
+                                <button onclick="goBackFromModal('bulkActionsModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-arrow-right text-lg"></i>
+                                </button>
+                                <button onclick="closeBulkActionsModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-6">
+                        <div class="mb-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-2">المستخدمين المحددين (<span id="selectedCount">0</span>)</h4>
+                            <div id="selectedUsersList" class="bg-gray-50 rounded-lg p-3 max-h-32 overflow-y-auto">
+                                <p class="text-gray-600 text-sm">لم يتم تحديد أي مستخدمين</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">العملية المطلوبة</label>
+                                <select id="bulkActionType" class="input-modern w-full">
+                                    <option value="">اختر العملية</option>
+                                    <option value="change_status">تغيير الحالة</option>
+                                    <option value="change_role">تغيير الدور</option>
+                                    <option value="reset_password">إعادة تعيين كلمة المرور</option>
+                                    <option value="delete">حذف المستخدمين</option>
+                                </select>
+                            </div>
+
+                            <div id="bulkValueContainer" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">القيمة الجديدة</label>
+                                <select id="bulkValue" class="input-modern w-full">
+                                    <!-- Options will be populated based on action type -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex space-x-4">
+                            <button onclick="executeBulkAction()" class="btn-modern btn-warning flex-1">
+                                <i class="fas fa-cogs ml-2"></i>تنفيذ العملية
+                            </button>
+                            <button onclick="closeBulkActionsModal()" class="btn-modern bg-gray-600 text-white">
+                                <i class="fas fa-times ml-2"></i>إلغاء
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permissions Management Modal -->
+    <div id="permissionsModal" class="fixed inset-0 z-50 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="absolute inset-0 bg-black opacity-50"></div>
+            <div class="relative bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-6 rounded-t-2xl">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-2xl font-bold">إدارة الصلاحيات المتقدمة</h3>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="goBackFromModal('permissionsModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                <i class="fas fa-arrow-right text-lg"></i>
+                            </button>
+                            <button onclick="closePermissionsModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <!-- Tabs -->
+                    <div class="flex space-x-4 mb-6 border-b">
+                        <button onclick="showPermissionsTab('permissions')" class="tab-button active px-4 py-2 text-purple-600 border-b-2 border-purple-600 font-medium">
+                            الصلاحيات المتاحة
+                        </button>
+                        <button onclick="showPermissionsTab('users')" class="tab-button px-4 py-2 text-gray-600 hover:text-purple-600 font-medium">
+                            صلاحيات المستخدمين
+                        </button>
+                        <button onclick="showPermissionsTab('templates')" class="tab-button px-4 py-2 text-gray-600 hover:text-purple-600 font-medium">
+                            قوالب الصلاحيات
+                        </button>
+                    </div>
+
+                    <!-- Permissions Tab -->
+                    <div id="permissionsTab" class="tab-content">
+                        <div class="mb-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4">جميع الصلاحيات المتاحة</h4>
+                            <div id="permissionsList" class="space-y-4">
+                                <!-- Permissions will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-4">
+                            <button onclick="selectAllPermissions()" class="btn-modern btn-primary">
+                                <i class="fas fa-check-square ml-2"></i>تحديد الكل
+                            </button>
+                            <button onclick="clearAllPermissions()" class="btn-modern bg-gray-600 text-white">
+                                <i class="fas fa-square ml-2"></i>إلغاء التحديد
+                            </button>
+                            <button onclick="savePermissions()" class="btn-modern btn-success flex-1">
+                                <i class="fas fa-save ml-2"></i>حفظ الصلاحيات للمستخدمين المحددين
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Users Tab -->
+                    <div id="usersTab" class="tab-content hidden">
+                        <div class="mb-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4">صلاحيات المستخدمين الحالية</h4>
+                            <div id="userPermissionsList" class="space-y-4">
+                                <!-- User permissions will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Templates Tab -->
+                    <div id="templatesTab" class="tab-content hidden">
+                        <div class="mb-6">
+                            <h4 class="text-lg font-semibold text-gray-800 mb-4">قوالب الصلاحيات</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div class="permission-template border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all duration-200" onclick="applyTemplate('admin')">
+                                    <i class="fas fa-user-shield text-3xl text-red-600 mb-3"></i>
+                                    <h5 class="font-medium text-gray-800 mb-2">مدير النظام</h5>
+                                    <p class="text-sm text-gray-600">جميع الصلاحيات</p>
+                                </div>
+                                <div class="permission-template border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all duration-200" onclick="applyTemplate('warehouse_manager')">
+                                    <i class="fas fa-warehouse text-3xl text-blue-600 mb-3"></i>
+                                    <h5 class="font-medium text-gray-800 mb-2">أمين المستودع</h5>
+                                    <p class="text-sm text-gray-600">إدارة المستودعات والمواد</p>
+                                </div>
+                                <div class="permission-template border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all duration-200" onclick="applyTemplate('accountant')">
+                                    <i class="fas fa-calculator text-3xl text-green-600 mb-3"></i>
+                                    <h5 class="font-medium text-gray-800 mb-2">المحاسب</h5>
+                                    <p class="text-sm text-gray-600">الفواتير والتقارير المالية</p>
+                                </div>
+                                <div class="permission-template border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all duration-200" onclick="applyTemplate('sales')">
+                                    <i class="fas fa-shopping-cart text-3xl text-orange-600 mb-3"></i>
+                                    <h5 class="font-medium text-gray-800 mb-2">موظف المبيعات</h5>
+                                    <p class="text-sm text-gray-600">إدارة الطلبات والعملاء</p>
+                                </div>
+                                <div class="permission-template border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-all duration-200" onclick="applyTemplate('viewer')">
+                                    <i class="fas fa-eye text-3xl text-gray-600 mb-3"></i>
+                                    <h5 class="font-medium text-gray-800 mb-2">مشاهد فقط</h5>
+                                    <p class="text-sm text-gray-600">صلاحيات القراءة فقط</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:3000/api';
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        let allUsers = [];
+        let selectedUsers = new Set();
+
+        // Fix API calls to use full URL
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            if (url.startsWith('/api/')) {
+                url = 'http://localhost:3000' + url;
+            }
+            return originalFetch(url, options);
+        };
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            if (!authToken || !currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Check if user has permission to manage users
+            if (!hasPermission('manage_users')) {
+                showMessage('error', 'ليس لديك صلاحية للوصول إلى إدارة المستخدمين');
+                return;
+            }
+
+            // Test backend connection first
+            testBackendConnection().then(() => {
+                loadUsersData();
+                loadUserCharts();
+                setupEventListeners();
+            }).catch((error) => {
+                console.error('Backend connection test failed:', error);
+                showMessage('error', 'لا يمكن الاتصال بالخادم. تأكد من أن الخادم يعمل على المنفذ 3000');
+            });
+        });
+
+        // Test backend connection
+        async function testBackendConnection() {
+            try {
+                const response = await fetch('http://localhost:3000/api/users', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok || response.status === 401 || response.status === 403) {
+                    console.log('Backend connection successful');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Backend connection failed:', error);
+                throw error;
+            }
+        }
+
+        // Check permissions
+        function hasPermission(permission) {
+            if (!currentUser || !currentUser.userType) return false;
+            const permissions = {
+                admin: ['manage_users', 'manage_warehouses', 'manage_materials', 'manage_orders', 'manage_invoices', 'view_reports', 'manage_settings'],
+                warehouse_manager: ['manage_warehouses', 'manage_materials', 'transfer_materials', 'view_reports'],
+                cutting_manager: ['manage_materials', 'manage_orders', 'view_reports', 'approve_orders'],
+                sorting_manager: ['manage_materials', 'manage_orders', 'view_reports', 'approve_orders'],
+                accountant: ['manage_invoices', 'view_reports', 'export_data', 'manage_orders'],
+                order_tracker: ['manage_orders', 'view_reports'],
+                delivery_manager: ['manage_orders', 'manage_invoices', 'view_reports'],
+                sales: ['manage_orders', 'view_reports']
+            };
+            return permissions[currentUser.userType] && permissions[currentUser.userType].includes(permission);
+        }
+
+        // Load users data
+        async function loadUsersData() {
+            try {
+                const response = await fetch('/api/users', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    allUsers = await response.json();
+                    updateUsersTable(allUsers);
+                    updateUserStatistics(allUsers);
+                    updateRoleDistribution(allUsers);
+                } else {
+                    showMessage('error', 'خطأ في تحميل بيانات المستخدمين');
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل بيانات المستخدمين');
+            }
+        }
+
+        // Update users table
+        function updateUsersTable(users) {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = '';
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-4 px-6">
+                        <input type="checkbox" class="user-checkbox" value="${user.id}" onchange="updateSelectedUsers()">
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="flex items-center">
+                            <div class="user-avatar bg-gradient-to-r ${getUserAvatarColor(user.user_type)}">
+                                ${getUserInitials(user.name)}
+                            </div>
+                            <div class="mr-4">
+                                <h4 class="font-semibold text-gray-800">${user.name}</h4>
+                                <p class="text-sm text-gray-600">@${user.username}</p>
+                                ${user.email ? `<p class="text-xs text-gray-500">${user.email}</p>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 px-6">
+                        <span class="role-badge ${getRoleBadgeColor(user.user_type)}">${getUserTypeText(user.user_type)}</span>
+                    </td>
+                    <td class="py-4 px-6">
+                        <span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">
+                            ${user.is_active ? 'نشط' : 'غير نشط'}
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-sm text-gray-600">
+                        ${formatLastLogin(user.created_at)}
+                    </td>
+                    <td class="py-4 px-6 text-sm text-gray-600">
+                        ${formatDate(user.created_at)}
+                    </td>
+                    <td class="py-4 px-6">
+                        <div class="flex space-x-2">
+                            <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50" title="تعديل">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="resetUserPassword(${user.id})" class="text-orange-600 hover:text-orange-800 p-2 rounded-lg hover:bg-orange-50" title="إعادة تعيين كلمة المرور">
+                                <i class="fas fa-key"></i>
+                            </button>
+                            <button onclick="toggleUserStatus(${user.id})" class="text-green-600 hover:text-green-800 p-2 rounded-lg hover:bg-green-50" title="تغيير الحالة">
+                                <i class="fas fa-toggle-on"></i>
+                            </button>
+                            <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="حذف">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update user statistics
+        function updateUserStatistics(users) {
+            const total = users.length;
+            const active = users.filter(u => u.is_active).length;
+            const inactive = total - active;
+            const newToday = users.filter(u => {
+                const today = new Date().toDateString();
+                return new Date(u.created_at).toDateString() === today;
+            }).length;
+
+            document.getElementById('totalUsers').textContent = total;
+            document.getElementById('activeUsers').textContent = active;
+            document.getElementById('inactiveUsers').textContent = inactive;
+            document.getElementById('newUsersToday').textContent = newToday;
+        }
+
+        // Update role distribution
+        function updateRoleDistribution(users) {
+            const roleCounts = {};
+            users.forEach(user => {
+                roleCounts[user.user_type] = (roleCounts[user.user_type] || 0) + 1;
+            });
+
+            const container = document.getElementById('roleDistribution');
+            container.innerHTML = '';
+
+            Object.entries(roleCounts).forEach(([role, count]) => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center';
+                div.innerHTML = `
+                    <span class="text-gray-600">${getUserTypeText(role)}</span>
+                    <span class="font-medium">${count}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Filter users
+        function filterUsers() {
+            const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const filteredUsers = allUsers.filter(user => {
+                const matchesSearch = user.name.toLowerCase().includes(searchTerm) ||
+                                    user.username.toLowerCase().includes(searchTerm) ||
+                                    (user.email && user.email.toLowerCase().includes(searchTerm));
+
+                const matchesRole = !roleFilter || user.user_type === roleFilter;
+                const matchesStatus = !statusFilter || String(user.is_active) === statusFilter;
+
+                return matchesSearch && matchesRole && matchesStatus;
+            });
+
+            updateUsersTable(filteredUsers);
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Bulk action type change
+            document.getElementById('bulkActionType').addEventListener('change', function() {
+                const container = document.getElementById('bulkValueContainer');
+                const valueSelect = document.getElementById('bulkValue');
+
+                if (this.value) {
+                    container.classList.remove('hidden');
+
+                    switch(this.value) {
+                        case 'change_status':
+                            valueSelect.innerHTML = `
+                                <option value="">اختر الحالة الجديدة</option>
+                                <option value="true">نشط</option>
+                                <option value="false">غير نشط</option>
+                            `;
+                            break;
+                        case 'change_role':
+                            valueSelect.innerHTML = `
+                                <option value="">اختر الدور الجديد</option>
+                                <option value="admin">مدير النظام</option>
+                                <option value="warehouse_manager">أمين المستودع</option>
+                                <option value="cutting_manager">مسؤول القص</option>
+                                <option value="sorting_manager">مسؤول الفرز</option>
+                                <option value="accountant">المحاسب</option>
+                                <option value="order_tracker">متابع الطلبات</option>
+                                <option value="delivery_manager">مسؤول التسليم</option>
+                                <option value="sales">موظف المبيعات</option>
+                            `;
+                            break;
+                        case 'reset_password':
+                            valueSelect.innerHTML = `
+                                <option value="">سيتم إنشاء كلمة مرور مؤقتة</option>
+                            `;
+                            break;
+                    }
+                } else {
+                    container.classList.add('hidden');
+                }
+            });
+        }
+
+        // Modal functions
+        function showAddUserModal() {
+            document.getElementById('addUserModal').classList.remove('hidden');
+            document.getElementById('addUserModal').classList.add('flex');
+        }
+
+        function closeAddUserModal() {
+            document.getElementById('addUserModal').classList.add('hidden');
+            document.getElementById('addUserModal').classList.remove('flex');
+            clearUserForm();
+        }
+
+        function showBulkActionsModal() {
+            if (selectedUsers.size === 0) {
+                showMessage('error', 'يرجى تحديد مستخدم واحد على الأقل');
+                return;
+            }
+
+            updateSelectedUsersList();
+            document.getElementById('bulkActionsModal').classList.remove('hidden');
+            document.getElementById('bulkActionsModal').classList.add('flex');
+        }
+
+        function closeBulkActionsModal() {
+            document.getElementById('bulkActionsModal').classList.add('hidden');
+            document.getElementById('bulkActionsModal').classList.remove('flex');
+        }
+
+        // Form functions
+        function clearUserForm() {
+            const inputs = ['username', 'fullName', 'email', 'phone', 'userType', 'tempPassword'];
+            inputs.forEach(id => {
+                document.getElementById(id).value = '';
+            });
+
+            // Clear permissions checkboxes
+            const checkboxes = document.querySelectorAll('.permission-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+
+        async function saveNewUser(event) {
+            event.preventDefault();
+
+            const userData = {
+                username: document.getElementById('username').value,
+                name: document.getElementById('fullName').value,
+                email: document.getElementById('email').value || null,
+                phone: document.getElementById('phone').value || null,
+                user_type: document.getElementById('userType').value,
+                password: document.getElementById('tempPassword').value
+            };
+
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', 'تم إنشاء المستخدم بنجاح');
+                    closeAddUserModal();
+                    loadUsersData();
+                } else {
+                    showMessage('error', result.message || 'خطأ في إنشاء المستخدم');
+                }
+            } catch (error) {
+                console.error('Error saving user:', error);
+                showMessage('error', 'حدث خطأ أثناء حفظ المستخدم');
+            }
+        }
+
+        // User management functions
+        function editUser(userId) {
+            // Find user data
+            const user = allUsers.find(u => u.id === userId);
+            if (!user) return;
+
+            // Fill form with user data
+            document.getElementById('username').value = user.username;
+            document.getElementById('fullName').value = user.name;
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('phone').value = user.phone || '';
+            document.getElementById('userType').value = user.user_type;
+
+            // Show modal
+            showAddUserModal();
+        }
+
+        async function resetUserPassword(userId) {
+            const newPassword = prompt('أدخل كلمة المرور الجديدة:');
+            if (!newPassword || newPassword.length < 6) {
+                showMessage('error', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/users/${userId}/reset-password`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ newPassword })
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'تم إعادة تعيين كلمة المرور بنجاح');
+                } else {
+                    showMessage('error', 'خطأ في إعادة تعيين كلمة المرور');
+                }
+            } catch (error) {
+                console.error('Error resetting password:', error);
+                showMessage('error', 'حدث خطأ أثناء إعادة تعيين كلمة المرور');
+            }
+        }
+
+        async function toggleUserStatus(userId) {
+            try {
+                const user = allUsers.find(u => u.id === userId);
+                const newStatus = !user.is_active;
+
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        name: user.name,
+                        email: user.email,
+                        phone: user.phone,
+                        user_type: user.user_type,
+                        is_active: newStatus
+                    })
+                });
+
+                if (response.ok) {
+                    showMessage('success', `تم ${newStatus ? 'تفعيل' : 'إلغاء تفعيل'} المستخدم بنجاح`);
+                    loadUsersData();
+                } else {
+                    showMessage('error', 'خطأ في تغيير حالة المستخدم');
+                }
+            } catch (error) {
+                console.error('Error toggling user status:', error);
+                showMessage('error', 'حدث خطأ أثناء تغيير حالة المستخدم');
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
+
+            try {
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'تم حذف المستخدم بنجاح');
+                    loadUsersData();
+                } else {
+                    showMessage('error', 'خطأ في حذف المستخدم');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showMessage('error', 'حدث خطأ أثناء حذف المستخدم');
+            }
+        }
+
+        // Bulk operations
+        function toggleAllUsers() {
+            const selectAll = document.getElementById('selectAllUsers').checked;
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll;
+            });
+
+            updateSelectedUsers();
+        }
+
+        function updateSelectedUsers() {
+            selectedUsers.clear();
+            const checkboxes = document.querySelectorAll('.user-checkbox:checked');
+
+            checkboxes.forEach(cb => {
+                selectedUsers.add(parseInt(cb.value));
+            });
+
+            // Update select all checkbox
+            const allCheckboxes = document.querySelectorAll('.user-checkbox');
+            const selectAll = document.getElementById('selectAllUsers');
+            selectAll.checked = checkboxes.length === allUsers.length && allUsers.length > 0;
+        }
+
+        function updateSelectedUsersList() {
+            const container = document.getElementById('selectedUsersList');
+            const count = document.getElementById('selectedCount');
+
+            count.textContent = selectedUsers.size;
+
+            if (selectedUsers.size === 0) {
+                container.innerHTML = '<p class="text-gray-600 text-sm">لم يتم تحديد أي مستخدمين</p>';
+                return;
+            }
+
+            const selectedUsersArray = allUsers.filter(u => selectedUsers.has(u.id));
+            container.innerHTML = selectedUsersArray.map(user =>
+                `<div class="text-sm text-gray-800">${user.name} (@${user.username})</div>`
+            ).join('');
+        }
+
+        function toggleBulkMenu() {
+            const menu = document.getElementById('bulkMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        async function executeBulkAction() {
+            const actionType = document.getElementById('bulkActionType').value;
+            const actionValue = document.getElementById('bulkValue').value;
+
+            if (!actionType) {
+                showMessage('error', 'يرجى اختيار العملية المطلوبة');
+                return;
+            }
+
+            try {
+                let endpoint = '';
+                let method = 'POST';
+                let data = { userIds: Array.from(selectedUsers) };
+
+                switch(actionType) {
+                    case 'change_status':
+                        endpoint = '/api/users/bulk-status';
+                        data.status = actionValue === 'true';
+                        break;
+                    case 'change_role':
+                        endpoint = '/api/users/bulk-role';
+                        data.role = actionValue;
+                        break;
+                    case 'reset_password':
+                        endpoint = '/api/users/bulk-reset-password';
+                        break;
+                    case 'delete':
+                        endpoint = '/api/users/bulk-delete';
+                        method = 'DELETE';
+                        break;
+                }
+
+                const response = await fetch(endpoint, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: method !== 'DELETE' ? JSON.stringify(data) : null
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'تم تنفيذ العملية المجمعة بنجاح');
+                    closeBulkActionsModal();
+                    loadUsersData();
+                } else {
+                    showMessage('error', 'خطأ في تنفيذ العملية المجمعة');
+                }
+            } catch (error) {
+                console.error('Error executing bulk action:', error);
+                showMessage('error', 'حدث خطأ أثناء تنفيذ العملية المجمعة');
+            }
+        }
+
+        // Export functionality
+        async function exportUsersData() {
+            try {
+                const response = await fetch('/api/export/users', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'users_data.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showMessage('success', 'تم تصدير البيانات بنجاح');
+                } else {
+                    showMessage('error', 'خطأ في تصدير البيانات');
+                }
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showMessage('error', 'حدث خطأ أثناء تصدير البيانات');
+            }
+        }
+
+        // Charts
+        function loadUserCharts() {
+            // This will be populated when we have real data
+            setTimeout(() => {
+                const rolesData = [{
+                    values: [1, 3, 2, 2, 1, 3],
+                    labels: ['مدير النظام', 'أمين مستودع', 'مسؤول قص', 'مسؤول فرز', 'محاسب', 'موظف مبيعات'],
+                    type: 'pie',
+                    marker: {
+                        colors: ['#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#f59e0b', '#06b6d4']
+                    },
+                    textinfo: 'label+percent',
+                    textposition: 'outside'
+                }];
+
+                const rolesLayout = {
+                    title: '',
+                    font: { family: 'Cairo, sans-serif' },
+                    margin: { t: 20, r: 20, b: 20, l: 20 },
+                    showlegend: true
+                };
+
+                Plotly.newPlot('userRolesChart', rolesData, rolesLayout, {responsive: true});
+            }, 1000);
+        }
+
+        // Helper functions
+        function getUserAvatarColor(userType) {
+            const colors = {
+                'admin': 'from-red-500 to-red-600',
+                'warehouse_manager': 'from-blue-500 to-blue-600',
+                'cutting_manager': 'from-green-500 to-green-600',
+                'sorting_manager': 'from-purple-500 to-purple-600',
+                'accountant': 'from-yellow-500 to-yellow-600',
+                'order_tracker': 'from-indigo-500 to-indigo-600',
+                'delivery_manager': 'from-pink-500 to-pink-600',
+                'sales': 'from-orange-500 to-orange-600'
+            };
+            return colors[userType] || 'from-gray-500 to-gray-600';
+        }
+
+        function getUserInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').substring(0, 2);
+        }
+
+        function getRoleBadgeColor(userType) {
+            const colors = {
+                'admin': 'bg-red-100 text-red-800',
+                'warehouse_manager': 'bg-blue-100 text-blue-800',
+                'cutting_manager': 'bg-green-100 text-green-800',
+                'sorting_manager': 'bg-purple-100 text-purple-800',
+                'accountant': 'bg-yellow-100 text-yellow-800',
+                'order_tracker': 'bg-indigo-100 text-indigo-800',
+                'delivery_manager': 'bg-pink-100 text-pink-800',
+                'sales': 'bg-orange-100 text-orange-800'
+            };
+            return colors[userType] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getUserTypeText(userType) {
+            const texts = {
+                'admin': 'مدير النظام',
+                'warehouse_manager': 'أمين المستودع',
+                'cutting_manager': 'مسؤول القص',
+                'sorting_manager': 'مسؤول الفرز',
+                'accountant': 'المحاسب',
+                'order_tracker': 'متابع الطلبات',
+                'delivery_manager': 'مسؤول التسليم',
+                'sales': 'موظف المبيعات'
+            };
+            return texts[userType] || userType;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ar-SA');
+        }
+
+        function formatLastLogin(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = Math.floor((now - date) / (1000 * 60)); // minutes
+
+            if (diff < 1) return 'الآن';
+            if (diff < 60) return `منذ ${diff} دقيقة`;
+            if (diff < 1440) return `منذ ${Math.floor(diff / 60)} ساعة`;
+            return `منذ ${Math.floor(diff / 1440)} يوم`;
+        }
+
+        function showMessage(type, message) {
+            // Simple alert for now - can be enhanced with better UI
+            alert(message);
+        }
+
+        // Show permissions management modal
+        function showPermissionsManager() {
+            document.getElementById('permissionsModal').classList.remove('hidden');
+            document.getElementById('permissionsModal').classList.add('flex');
+            loadPermissionsData();
+        }
+
+        // Close permissions modal
+        function closePermissionsModal() {
+            document.getElementById('permissionsModal').classList.add('hidden');
+            document.getElementById('permissionsModal').classList.remove('flex');
+        }
+
+        // Load permissions data
+        async function loadPermissionsData() {
+            try {
+                // Load all permissions
+                const permissionsResponse = await fetch('/api/permissions', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (permissionsResponse.ok) {
+                    const permissions = await permissionsResponse.json();
+                    displayPermissions(permissions);
+                }
+
+                // Load user permissions
+                const userPermissionsResponse = await fetch('/api/users/permissions/all', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (userPermissionsResponse.ok) {
+                    const userPermissions = await userPermissionsResponse.json();
+                    displayUserPermissions(userPermissions);
+                }
+
+            } catch (error) {
+                console.error('Error loading permissions data:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل بيانات الصلاحيات');
+            }
+        }
+
+        // Display permissions in the interface
+        function displayPermissions(permissions) {
+            const container = document.getElementById('permissionsList');
+            container.innerHTML = '';
+
+            const categories = {
+                'إدارة المستخدمين': ['manage_users', 'create_users', 'edit_users', 'delete_users', 'reset_passwords'],
+                'إدارة المستودعات': ['manage_warehouses', 'create_warehouses', 'edit_warehouses', 'delete_warehouses'],
+                'إدارة المواد': ['manage_materials', 'create_materials', 'edit_materials', 'delete_materials', 'transfer_materials'],
+                'إدارة الطلبات': ['manage_orders', 'create_orders', 'edit_orders', 'approve_orders', 'cancel_orders'],
+                'إدارة الفواتير': ['manage_invoices', 'create_invoices', 'edit_invoices', 'approve_invoices'],
+                'التقارير': ['view_reports', 'export_reports', 'manage_reports'],
+                'الإعدادات': ['manage_settings', 'system_settings', 'backup_restore'],
+                'أخرى': ['view_analytics', 'manage_notifications', 'system_health']
+            };
+
+            Object.entries(categories).forEach(([category, perms]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'permission-category mb-6';
+                categoryDiv.innerHTML = `
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3">${category}</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        ${perms.map(perm => {
+                            const permission = permissions.find(p => p.key === perm);
+                            return `
+                                <div class="permission-item flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" class="permission-checkbox" value="${perm}" id="perm_${perm}">
+                                        <label for="perm_${perm}" class="mr-3 text-sm font-medium text-gray-700">
+                                            ${permission ? permission.name : perm}
+                                        </label>
+                                    </div>
+                                    <span class="text-xs text-gray-500">${permission ? permission.description : ''}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                container.appendChild(categoryDiv);
+            });
+        }
+
+        // Display user permissions
+        function displayUserPermissions(userPermissions) {
+            const container = document.getElementById('userPermissionsList');
+            container.innerHTML = '';
+
+            userPermissions.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-permission-item border border-gray-200 rounded-lg p-4 mb-4';
+                userDiv.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <div class="user-avatar bg-gradient-to-r ${getUserAvatarColor(user.user_type)} mr-3">
+                                ${getUserInitials(user.name)}
+                            </div>
+                            <div>
+                                <h5 class="font-medium text-gray-800">${user.name}</h5>
+                                <p class="text-sm text-gray-600">@${user.username}</p>
+                            </div>
+                        </div>
+                        <span class="role-badge ${getRoleBadgeColor(user.user_type)}">${getUserTypeText(user.user_type)}</span>
+                    </div>
+                    <div class="permissions-tags flex flex-wrap gap-2">
+                        ${user.permissions.map(perm => `<span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">${perm}</span>`).join('')}
+                    </div>
+                `;
+                container.appendChild(userDiv);
+            });
+        }
+
+        // Save permissions for selected users
+        async function savePermissions() {
+            try {
+                const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => parseInt(cb.value));
+                const selectedPermissions = Array.from(document.querySelectorAll('.permission-checkbox:checked')).map(cb => cb.value);
+
+                if (selectedUsers.length === 0) {
+                    showMessage('error', 'يرجى تحديد مستخدم واحد على الأقل');
+                    return;
+                }
+
+                const response = await fetch('/api/users/permissions/bulk', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        user_ids: selectedUsers,
+                        permissions: selectedPermissions
+                    })
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'تم حفظ الصلاحيات بنجاح');
+                    closePermissionsModal();
+                    loadUsersData();
+                } else {
+                    showMessage('error', 'خطأ في حفظ الصلاحيات');
+                }
+            } catch (error) {
+                console.error('Error saving permissions:', error);
+                showMessage('error', 'حدث خطأ أثناء حفظ الصلاحيات');
+            }
+        }
+
+        // Tab switching for permissions modal
+        function showPermissionsTab(tabName) {
+            // Hide all tabs
+            document.getElementById('permissionsTab').classList.add('hidden');
+            document.getElementById('usersTab').classList.add('hidden');
+            document.getElementById('templatesTab').classList.add('hidden');
+
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active', 'text-purple-600', 'border-b-2', 'border-purple-600');
+                btn.classList.add('text-gray-600');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+
+            // Add active class to clicked button
+            event.target.classList.remove('text-gray-600');
+            event.target.classList.add('active', 'text-purple-600', 'border-b-2', 'border-purple-600');
+        }
+
+        // Select all permissions
+        function selectAllPermissions() {
+            const checkboxes = document.querySelectorAll('.permission-checkbox');
+            checkboxes.forEach(cb => cb.checked = true);
+        }
+
+        // Clear all permissions
+        function clearAllPermissions() {
+            const checkboxes = document.querySelectorAll('.permission-checkbox');
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+
+        // Apply permission template
+        function applyTemplate(templateType) {
+            const templates = {
+                admin: [
+                    'manage_users', 'create_users', 'edit_users', 'delete_users', 'reset_passwords',
+                    'manage_warehouses', 'create_warehouses', 'edit_warehouses', 'delete_warehouses',
+                    'manage_materials', 'create_materials', 'edit_materials', 'delete_materials', 'transfer_materials',
+                    'manage_orders', 'create_orders', 'edit_orders', 'approve_orders', 'cancel_orders',
+                    'manage_invoices', 'create_invoices', 'edit_invoices', 'approve_invoices',
+                    'view_reports', 'export_reports', 'manage_reports',
+                    'manage_settings', 'system_settings', 'backup_restore',
+                    'view_analytics', 'manage_notifications', 'system_health'
+                ],
+                warehouse_manager: [
+                    'manage_warehouses', 'create_warehouses', 'edit_warehouses',
+                    'manage_materials', 'create_materials', 'edit_materials', 'transfer_materials',
+                    'view_reports', 'view_analytics'
+                ],
+                accountant: [
+                    'manage_invoices', 'create_invoices', 'edit_invoices', 'approve_invoices',
+                    'view_reports', 'export_reports', 'manage_reports',
+                    'view_analytics'
+                ],
+                sales: [
+                    'manage_orders', 'create_orders', 'edit_orders',
+                    'view_reports', 'view_analytics'
+                ],
+                viewer: [
+                    'view_reports', 'view_analytics'
+                ]
+            };
+
+            const permissions = templates[templateType] || [];
+            const checkboxes = document.querySelectorAll('.permission-checkbox');
+
+            checkboxes.forEach(cb => {
+                cb.checked = permissions.includes(cb.value);
+            });
+
+            showMessage('info', `تم تطبيق قالب: ${getUserTypeText(templateType)}`);
+        }
+
+        function bulkEditUsers() {
+            showBulkActionsModal();
+        }
+
+        function bulkChangeStatus() {
+            showBulkActionsModal();
+        }
+
+        function bulkResetPasswords() {
+            showBulkActionsModal();
+        }
+
+        function bulkDeleteUsers() {
+            if (confirm('هل أنت متأكد من حذف المستخدمين المحددين؟')) {
+                // Implementation for bulk delete
+                showMessage('info', 'حذف المستخدمين المحددين - سيتم تطويرها قريباً');
+            }
+        }
+
+        // Go back from modal function
+        function goBackFromModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

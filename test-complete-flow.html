@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار التدفق الكامل - نظام إدارة المستودعات</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .success { background: rgba(16, 185, 129, 0.2); border-left: 4px solid #10b981; }
+        .error { background: rgba(239, 68, 68, 0.2); border-left: 4px solid #ef4444; }
+        .info { background: rgba(59, 130, 246, 0.2); border-left: 4px solid #3b82f6; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار التدفق الكامل لنظام إدارة المستودعات</h1>
+        <p>هذا الاختبار يتحقق من جميع مكونات النظام: قاعدة البيانات ← الخادم الخلفي ← الخادم الأمامي</p>
+
+        <div class="test-section" id="authTest">
+            <h3>🔐 اختبار المصادقة</h3>
+            <button onclick="testAuthentication()">اختبر تسجيل الدخول</button>
+            <div id="authResult"></div>
+        </div>
+
+        <div class="test-section" id="warehouseTest">
+            <h3>🏪 اختبار بيانات المستودعات</h3>
+            <button onclick="testWarehouses()">اختبر API المستودعات</button>
+            <div id="warehouseResult"></div>
+        </div>
+
+        <div class="test-section" id="materialsTest">
+            <h3>📦 اختبار بيانات المواد</h3>
+            <button onclick="testMaterials()">اختبر API المواد</button>
+            <div id="materialsResult"></div>
+        </div>
+
+        <div class="test-section" id="usersTest">
+            <h3>👥 اختبار بيانات المستخدمين</h3>
+            <button onclick="testUsers()">اختبر API المستخدمين</button>
+            <div id="usersResult"></div>
+        </div>
+
+        <div class="test-section" id="corsTest">
+            <h3>🌐 اختبار CORS</h3>
+            <button onclick="testCORS()">اختبر الاتصال بين الخوادم</button>
+            <div id="corsResult"></div>
+        </div>
+
+        <div class="test-section" id="fullFlowTest">
+            <h3>🔄 اختبار التدفق الكامل</h3>
+            <button onclick="testFullFlow()">اختبر التدفق الكامل</button>
+            <div id="fullFlowResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+        let authToken = null;
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        async function testAuthentication() {
+            try {
+                console.log('Testing authentication...');
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123',
+                        userType: 'admin'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    authToken = data.token;
+                    showResult('authResult', `
+                        ✅ تم تسجيل الدخول بنجاح!<br>
+                        🆔 المستخدم: ${data.user.name}<br>
+                        🎫 الرمز المميز: ${data.token.substring(0, 50)}...<br>
+                        📋 نوع المستخدم: ${data.user.userType}
+                    `, 'success');
+                } else {
+                    showResult('authResult', `❌ فشل في تسجيل الدخول: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('authResult', `❌ خطأ في الاتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function testWarehouses() {
+            if (!authToken) {
+                showResult('warehouseResult', '❌ يرجى اختبار المصادقة أولاً', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/warehouses`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult('warehouseResult', `
+                        ✅ تم استرجاع بيانات المستودعات بنجاح!<br>
+                        📊 عدد المستودعات: ${data.length}<br>
+                        🏪 أسماء المستودعات: ${data.map(w => w.name).join(', ')}
+                    `, 'success');
+                } else {
+                    showResult('warehouseResult', `❌ خطأ في استرجاع المستودعات: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('warehouseResult', `❌ خطأ في الاتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function testMaterials() {
+            if (!authToken) {
+                showResult('materialsResult', '❌ يرجى اختبار المصادقة أولاً', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/materials`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult('materialsResult', `
+                        ✅ تم استرجاع بيانات المواد بنجاح!<br>
+                        📦 عدد المواد: ${data.length}<br>
+                        🏷️ أنواع المواد: ${[...new Set(data.map(m => m.type))].join(', ')}
+                    `, 'success');
+                } else {
+                    showResult('materialsResult', `❌ خطأ في استرجاع المواد: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('materialsResult', `❌ خطأ في الاتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function testUsers() {
+            if (!authToken) {
+                showResult('usersResult', '❌ يرجى اختبار المصادقة أولاً', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users?userType=warehouse_manager`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult('usersResult', `
+                        ✅ تم استرجاع بيانات المستخدمين بنجاح!<br>
+                        👥 عدد المستخدمين: ${data.length}<br>
+                        👤 أسماء المستخدمين: ${data.map(u => u.name).join(', ')}
+                    `, 'success');
+                } else {
+                    showResult('usersResult', `❌ خطأ في استرجاع المستخدمين: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showResult('usersResult', `❌ خطأ في الاتصال: ${error.message}`, 'error');
+            }
+        }
+
+        async function testCORS() {
+            try {
+                // Test if frontend server can access backend
+                const response = await fetch('http://localhost:8080/test-complete-flow.html');
+                if (response.ok) {
+                    showResult('corsResult', `
+                        ✅ خادم الواجهة الأمامية يعمل على المنفذ 8080<br>
+                        🌐 جاهز لاختبار CORS
+                    `, 'success');
+                } else {
+                    showResult('corsResult', `❌ خادم الواجهة الأمامية لا يعمل`, 'error');
+                }
+            } catch (error) {
+                showResult('corsResult', `❌ لا يمكن الوصول لخادم الواجهة الأمامية: ${error.message}`, 'error');
+            }
+        }
+
+        async function testFullFlow() {
+            try {
+                showResult('fullFlowResult', '🔄 جاري اختبار التدفق الكامل...', 'info');
+
+                // Test complete flow: Login -> Get warehouses -> Get materials -> Get users
+                const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123',
+                        userType: 'admin'
+                    })
+                });
+
+                if (!loginResponse.ok) {
+                    throw new Error('فشل في تسجيل الدخول');
+                }
+
+                const loginData = await loginResponse.json();
+                const token = loginData.token;
+
+                // Test warehouses
+                const warehousesResponse = await fetch(`${API_BASE_URL}/warehouses`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                // Test materials
+                const materialsResponse = await fetch(`${API_BASE_URL}/materials`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                // Test users
+                const usersResponse = await fetch(`${API_BASE_URL}/users?userType=warehouse_manager`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const warehouses = await warehousesResponse.json();
+                const materials = await materialsResponse.json();
+                const users = await usersResponse.json();
+
+                showResult('fullFlowResult', `
+                    ✅ تم اختبار التدفق الكامل بنجاح!<br><br>
+                    📊 <strong>المستودعات:</strong> ${warehouses.length} مستودع<br>
+                    📦 <strong>المواد:</strong> ${materials.length} مادة<br>
+                    👥 <strong>المستخدمين:</strong> ${users.length} مستخدم<br><br>
+                    🔗 <strong>تدفق البيانات:</strong> قاعدة البيانات ← الخادم الخلفي ← الخادم الأمامي ✅<br>
+                    🔐 <strong>المصادقة:</strong> تعمل بشكل صحيح<br>
+                    🌐 <strong>CORS:</strong> مُكوّن بشكل صحيح
+                `, 'success');
+
+            } catch (error) {
+                showResult('fullFlowResult', `❌ فشل في اختبار التدفق الكامل: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-run CORS test on page load
+        window.addEventListener('load', testCORS);
+    </script>
+</body>
+</html>

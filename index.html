@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة المستودعات - تسجيل الدخول</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/css/enhanced-styles.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23667eea'/><text y='50' x='50' text-anchor='middle' dominant-baseline='middle' fill='white' font-family='Arial' font-size='40'>W</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .login-bg {
+            background: linear-gradient(135deg, #ffffff 0%, #fefefe 50%, #fcfcfc 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(22, 163, 74, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(21, 128, 61, 0.03) 0%, transparent 50%);
+            animation: backgroundShift 15s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.9; }
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.08),
+                0 8px 16px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(203, 213, 225, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .login-card:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.12),
+                0 12px 24px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+        
+        .form-input {
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-weight: 400;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .form-input:hover {
+            border-color: #9ca3af;
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-input:focus {
+            border-color: #3b82f6;
+            background: rgba(255, 255, 255, 1);
+            box-shadow:
+                0 0 0 3px rgba(59, 130, 246, 0.1),
+                0 4px 12px rgba(59, 130, 246, 0.15);
+            outline: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #15803d 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow:
+                0 4px 12px rgba(34, 197, 94, 0.25),
+                0 2px 4px rgba(22, 163, 74, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow:
+                0 6px 16px rgba(34, 197, 94, 0.35),
+                0 4px 8px rgba(22, 163, 74, 0.25);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0px) scale(1);
+            box-shadow:
+                0 2px 8px rgba(34, 197, 94, 0.3),
+                0 1px 2px rgba(22, 163, 74, 0.2);
+        }
+
+        /* Enhanced form interactions */
+        .form-input:hover {
+            border-color: #764ba2;
+            box-shadow: 0 0 0 1px rgba(118, 75, 162, 0.1);
+        }
+
+        /* Improved focus states */
+        .form-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: scale(1.01);
+        }
+
+        /* Enhanced card animations */
+        .login-card {
+            animation: cardFloat 10s ease-in-out infinite;
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0px) rotateX(0deg); }
+            50% { transform: translateY(-3px) rotateX(1deg); }
+        }
+
+        /* Improved floating shapes */
+        .shape {
+            transition: all 0.3s ease;
+        }
+
+        .shape:hover {
+            transform: translateY(-30px) rotate(180deg) scale(1.1);
+            opacity: 0.2;
+        }
+        
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        
+        .shape {
+            position: absolute;
+            opacity: 0.08;
+            animation: float 12s ease-in-out infinite;
+            color: #22c55e;
+        }
+
+        .shape:nth-child(1) {
+            top: 15%;
+            left: 8%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            top: 65%;
+            right: 8%;
+            animation-delay: 4s;
+        }
+
+        .shape:nth-child(3) {
+            bottom: 15%;
+            left: 15%;
+            animation-delay: 8s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.05; }
+            50% { transform: translateY(-10px) rotate(90deg); opacity: 0.03; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-bg">
+        <div class="floating-shapes">
+            <div class="shape text-6xl"><i class="fas fa-warehouse"></i></div>
+            <div class="shape text-6xl"><i class="fas fa-boxes"></i></div>
+            <div class="shape text-6xl"><i class="fas fa-truck"></i></div>
+        </div>
+        
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="max-w-md mx-auto">
+                <div class="login-card p-10">
+                    <div class="text-center mb-10">
+                        <div class="w-20 h-20 bg-gradient-to-br from-green-600 via-green-700 to-green-800 rounded-xl flex items-center justify-center mx-auto mb-6 shadow-lg transform hover:scale-105 transition-all duration-300">
+                            <i class="fas fa-warehouse text-white text-2xl"></i>
+                        </div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-3">نظام إدارة المستودعات</h1>
+                        <p class="text-lg text-gray-800 font-medium">تسجيل الدخول إلى النظام المتقدم</p>
+                        <div class="w-16 h-1 bg-gradient-to-r from-green-600 to-green-700 rounded-full mx-auto mt-4"></div>
+                    </div>
+                    
+                    <form id="loginForm" class="space-y-8">
+                        <div class="space-y-2">
+                            <label class="block text-base font-semibold text-gray-900 mb-3">اسم المستخدم</label>
+                            <div class="relative group">
+                                <span class="absolute inset-y-0 left-0 pl-4 flex items-center transition-colors duration-300 group-focus-within:text-purple-600">
+                                    <i class="fas fa-user text-gray-400 text-lg"></i>
+                                </span>
+                                <input type="text" id="username" class="form-input w-full pl-12" placeholder="أدخل اسم المستخدم" required>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label class="block text-base font-semibold text-gray-900 mb-3">كلمة المرور</label>
+                            <div class="relative group">
+                                <span class="absolute inset-y-0 left-0 pl-4 flex items-center transition-colors duration-300 group-focus-within:text-purple-600">
+                                    <i class="fas fa-lock text-gray-400 text-lg"></i>
+                                </span>
+                                <input type="password" id="password" class="form-input w-full pl-12 pr-12" placeholder="أدخل كلمة المرور" required>
+                                <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-4 flex items-center hover:text-purple-600 transition-colors duration-300">
+                                    <i class="fas fa-eye text-gray-400 text-lg" id="eyeIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label class="block text-base font-semibold text-gray-900 mb-3">نوع المستخدم</label>
+                            <div class="relative">
+                                <select id="userType" class="form-input w-full appearance-none cursor-pointer" required>
+                                    <option value="">اختر نوع المستخدم</option>
+                                    <option value="warehouse_manager">🏪 أمين المستودع</option>
+                                    <option value="cutting_manager">✂️ مسؤول القصاصة</option>
+                                    <option value="sorting_manager">📦 مسؤول الفرازة</option>
+                                    <option value="accountant">💰 المحاسب</option>
+                                    <option value="order_tracker">📋 متابع الطلبات</option>
+                                    <option value="delivery_manager">🚚 مسؤول الاستلام والتسليم</option>
+                                    <option value="sales">🛒 موظف المبيعات</option>
+                                    <option value="admin">👑 مستخدم شامل</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary w-full mt-8">
+                            <i class="fas fa-sign-in-alt ml-3 text-lg"></i>
+                            <span class="text-lg">تسجيل الدخول</span>
+                        </button>
+                    </form>
+                    
+                    <div class="mt-8 text-center">
+                        <div class="bg-green-50 rounded-xl p-4 border border-green-300">
+                            <p class="text-sm text-green-950 font-medium">
+                                <i class="fas fa-info-circle ml-2 text-green-900"></i>
+                                في حال نسيان كلمة المرور، الرجاء التواصل مع مسؤول النظام
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const userType = document.getElementById('userType').value;
+
+            console.log('=== LOGIN ATTEMPT ===');
+            console.log('Username:', username);
+            console.log('Password:', password);
+            console.log('UserType:', userType);
+            console.log('API URL:', `${API_BASE_URL}/auth/login`);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        userType: userType
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    console.log('Login successful!');
+                    console.log('Token received:', data.token ? 'YES' : 'NO');
+                    console.log('User data:', data.user);
+
+                    // Save token and user data
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+
+                    console.log('Data saved to localStorage');
+                    console.log('Redirecting to dashboard...');
+
+                    // Redirect to dashboard
+                    window.location.href = 'dashboard.html';
+                } else {
+                    console.error('Login failed:', data.message);
+                    alert(data.message || 'بيانات تسجيل الدخول غير صحيحة');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.');
+            }
+        });
+    </script>
+</body>
+</html>

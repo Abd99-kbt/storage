@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الطلبات المتقدم - إدارة المستودعات</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .order-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .order-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .order-status {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .order-priority {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .order-progress {
+            position: relative;
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .stage-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .stage {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .stage-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .stage.active .stage-circle {
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .stage.completed .stage-circle {
+            background: #10b981 !important;
+            color: white;
+        }
+
+        .stage-line {
+            position: absolute;
+            top: 16px;
+            right: 50%;
+            left: 50%;
+            height: 2px;
+            background: #e5e7eb;
+            z-index: 1;
+        }
+
+        .stage.completed + .stage-line {
+            background: #10b981;
+        }
+
+        .customer-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .material-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .material-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .material-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-left: 12px;
+        }
+
+        .order-timer {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .timer-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #92400e;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .modal-xl {
+            max-width: 1200px;
+        }
+
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .kanban-column {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .kanban-header {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .kanban-item {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .kanban-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .priority-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .priority-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .priority-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .priority-low {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .stage-pending { background: #f3f4f6; color: #6b7280; }
+        .stage-processing { background: #dbeafe; color: #1e40af; }
+        .stage-sorting { background: #e9d5ff; color: #7c3aed; }
+        .stage-cutting { background: #d1fae5; color: #065f46; }
+        .stage-completed { background: #dcfce7; color: #166534; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="container mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">نظام الطلبات المتقدم</h1>
+                    <p class="text-gray-600">إدارة شاملة للطلبات ومراحل المعالجة</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="showOrderAnalytics()" class="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-200">
+                        <i class="fas fa-chart-line ml-2"></i>التحليلات
+                    </button>
+                    <button onclick="showAddOrderModal()" class="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-200">
+                        <i class="fas fa-plus ml-2"></i>إنشاء طلب جديد
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
+            <div class="order-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">قيد الانتظار</p>
+                        <p class="text-3xl font-bold text-gray-800" id="pendingOrders">15</p>
+                        <p class="text-yellow-600 text-sm mt-1">
+                            <i class="fas fa-clock ml-1"></i>في انتظار الموافقة
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-clock text-yellow-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">قيد المعالجة</p>
+                        <p class="text-3xl font-bold text-gray-800" id="processingOrders">23</p>
+                        <p class="text-blue-600 text-sm mt-1">
+                            <i class="fas fa-cog ml-1"></i>قيد المعالجة
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-cog text-blue-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">مرحلة الفرز</p>
+                        <p class="text-3xl font-bold text-gray-800" id="sortingOrders">8</p>
+                        <p class="text-purple-600 text-sm mt-1">
+                            <i class="fas fa-sort ml-1"></i>في مرحلة الفرز
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-sort text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">مرحلة القص</p>
+                        <p class="text-3xl font-bold text-gray-800" id="cuttingOrders">12</p>
+                        <p class="text-green-600 text-sm mt-1">
+                            <i class="fas fa-cut ml-1"></i>في مرحلة القص
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-cut text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">مكتمل</p>
+                        <p class="text-3xl font-bold text-gray-800" id="completedOrders">45</p>
+                        <p class="text-green-600 text-sm mt-1">
+                            <i class="fas fa-check ml-1"></i>تم التسليم
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-check text-green-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">الإجمالي</p>
+                        <p class="text-3xl font-bold text-gray-800" id="totalOrders">103</p>
+                        <p class="text-gray-600 text-sm mt-1">
+                            <i class="fas fa-list ml-1"></i>جميع الطلبات
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-list text-gray-600"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="chart-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">توزيع الطلبات حسب المرحلة</h3>
+                <div id="ordersStageChart" style="height: 350px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">أداء الطلبات الشهري</h3>
+                <div id="ordersPerformanceChart" style="height: 350px;"></div>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6">لوحة كانبان للطلبات</h3>
+            <div class="kanban-board">
+                <div class="kanban-column">
+                    <div class="kanban-header text-yellow-600">قيد الانتظار</div>
+                    <div class="kanban-item">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-800">#1234</h4>
+                            <span class="priority-badge priority-high">عاجل</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">شركة الأعمال الحديثة</p>
+                        <p class="text-xs text-gray-500 mb-3">50 طبقة - 2 ساعة</p>
+                        <div class="order-actions">
+                            <button onclick="approveOrder(1234)" class="action-btn bg-green-100 text-green-700 hover:bg-green-200">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button onclick="viewOrder(1234)" class="action-btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="kanban-item">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-800">#1235</h4>
+                            <span class="priority-badge priority-medium">متوسط</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">مؤسسة التجارة العالمية</p>
+                        <p class="text-xs text-gray-500 mb-3">75 طبقة - 4 ساعات</p>
+                        <div class="order-actions">
+                            <button onclick="approveOrder(1235)" class="action-btn bg-green-100 text-green-700 hover:bg-green-200">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button onclick="viewOrder(1235)" class="action-btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kanban-column">
+                    <div class="kanban-header text-blue-600">قيد المعالجة</div>
+                    <div class="kanban-item">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-800">#1236</h4>
+                            <span class="priority-badge priority-low">عادي</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">شركة التوريدات المحدودة</p>
+                        <p class="text-xs text-gray-500 mb-3">30 طبقة - 1 ساعة</p>
+                        <div class="order-progress">
+                            <div class="progress-fill bg-blue-500" style="width: 60%"></div>
+                        </div>
+                        <div class="order-actions">
+                            <button onclick="moveToSorting(1236)" class="action-btn bg-purple-100 text-purple-700 hover:bg-purple-200">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button onclick="viewOrder(1236)" class="action-btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kanban-column">
+                    <div class="kanban-header text-purple-600">مرحلة الفرز</div>
+                    <div class="kanban-item">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-800">#1237</h4>
+                            <span class="priority-badge priority-medium">متوسط</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">مؤسسة الخدمات التجارية</p>
+                        <p class="text-xs text-gray-500 mb-3">40 طبقة - 3 ساعات</p>
+                        <div class="order-progress">
+                            <div class="progress-fill bg-purple-500" style="width: 80%"></div>
+                        </div>
+                        <div class="order-actions">
+                            <button onclick="moveToCutting(1237)" class="action-btn bg-green-100 text-green-700 hover:bg-green-200">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                            <button onclick="viewOrder(1237)" class="action-btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kanban-column">
+                    <div class="kanban-header text-green-600">مكتمل</div>
+                    <div class="kanban-item">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-800">#1238</h4>
+                            <span class="priority-badge priority-low">عادي</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">شركة المقاولات الكبرى</p>
+                        <p class="text-xs text-gray-500 mb-3">60 طبقة - تم التسليم</p>
+                        <div class="order-progress">
+                            <div class="progress-fill bg-green-500" style="width: 100%"></div>
+                        </div>
+                        <div class="order-actions">
+                            <button onclick="viewOrder(1238)" class="action-btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="createInvoice(1238)" class="action-btn bg-purple-100 text-purple-700 hover:bg-purple-200">
+                                <i class="fas fa-file-invoice"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Grid -->
+        <div class="orders-grid">
+            <div class="order-card">
+                <div class="order-status bg-yellow-500 text-white">قيد الانتظار</div>
+                <div class="order-priority bg-red-500 text-white">عاجل</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">طلبية #1234</h3>
+                        <p class="text-gray-600 text-sm">شركة الأعمال الحديثة</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-gray-800">50</p>
+                        <p class="text-sm text-gray-600">طبقة</p>
+                    </div>
+                </div>
+
+                <div class="customer-info">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">الهاتف:</span>
+                            <span class="font-medium">+963 11 123 4567</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">العنوان:</span>
+                            <span class="font-medium">دمشق - المزة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stage-indicator">
+                    <div class="stage">
+                        <div class="stage-circle bg-gray-100 text-gray-600">1</div>
+                        <div class="text-xs text-gray-600">طلب</div>
+                    </div>
+                    <div class="stage-line"></div>
+                    <div class="stage">
+                        <div class="stage-circle bg-gray-100 text-gray-600">2</div>
+                        <div class="text-xs text-gray-600">معالجة</div>
+                    </div>
+                    <div class="stage-line"></div>
+                    <div class="stage">
+                        <div class="stage-circle bg-gray-100 text-gray-600">3</div>
+                        <div class="text-xs text-gray-600">فرز</div>
+                    </div>
+                    <div class="stage-line"></div>
+                    <div class="stage">
+                        <div class="stage-circle bg-gray-100 text-gray-600">4</div>
+                        <div class="text-xs text-gray-600">قص</div>
+                    </div>
+                    <div class="stage-line"></div>
+                    <div class="stage">
+                        <div class="stage-circle bg-gray-100 text-gray-600">5</div>
+                        <div class="text-xs text-gray-600">تسليم</div>
+                    </div>
+                </div>
+
+                <div class="order-timer">
+                    <div class="timer-value">2:30:45</div>
+                    <div class="text-sm text-gray-600">وقت المعالجة المتبقي</div>
+                </div>
+
+                <div class="material-list">
+                    <div class="material-item">
+                        <div class="material-icon bg-blue-100 text-blue-600">
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800">ورق أبيض A4</div>
+                            <div class="text-sm text-gray-600">25 طبقة - 125 كغ</div>
+                        </div>
+                    </div>
+                    <div class="material-item">
+                        <div class="material-icon bg-orange-100 text-orange-600">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800">كرتون بني</div>
+                            <div class="text-sm text-gray-600">25 طبقة - 188 كغ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mt-6">
+                    <div class="flex space-x-2">
+                        <button onclick="approveOrder(1234)" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200">
+                            <i class="fas fa-check ml-2"></i>موافقة
+                        </button>
+                        <button onclick="viewOrder(1234)" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                            <i class="fas fa-eye ml-2"></i>عرض
+                        </button>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600">تاريخ الطلب</p>
+                        <p class="font-medium">2025-09-28</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="order-card">
+                <div class="order-status bg-green-500 text-white">مكتمل</div>
+                <div class="order-priority bg-green-500 text-white">عادي</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">طلبية #1238</h3>
+                        <p class="text-gray-600 text-sm">شركة المقاولات الكبرى</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-bold text-gray-800">60</p>
+                        <p class="text-sm text-gray-600">طبقة</p>
+                    </div>
+                </div>
+
+                <div class="customer-info">
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">الهاتف:</span>
+                            <span class="font-medium">+963 11 987 6543</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">العنوان:</span>
+                            <span class="font-medium">دمشق - كفرسوسة</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stage-indicator">
+                    <div class="stage completed">
+                        <div class="stage-circle bg-green-500 text-white">1</div>
+                        <div class="text-xs text-green-600">طلب</div>
+                    </div>
+                    <div class="stage-line"></div>
+                    <div class="stage completed">
+                        <div class="stage-circle bg-green-500 text-white">2</div>
+                        <div class="text-xs text-green-600">معالجة</div>
+                    </div>
+                    <div class="stage-line"></div>
+                    <div class="stage completed">
+                        <div class="stage-circle bg-green-500 text-white">3</div>
+                        <div class="text-xs text-green-600">فرز</div>
+                    </div>
+                    <div class="stage-line"></div>
+                    <div class="stage completed">
+                        <div class="stage-circle bg-green-500 text-white">4</div>
+                        <div class="text-xs text-green-600">قص</div>
+                    </div>
+                    <div class="stage-line"></div>
+                    <div class="stage completed">
+                        <div class="stage-circle bg-green-500 text-white">5</div>
+                        <div class="text-xs text-green-600">تسليم</div>
+                    </div>
+                </div>
+
+                <div class="material-list">
+                    <div class="material-item">
+                        <div class="material-icon bg-purple-100 text-purple-600">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800">ورق ملون</div>
+                            <div class="text-sm text-gray-600">30 طبقة - 90 كغ</div>
+                        </div>
+                    </div>
+                    <div class="material-item">
+                        <div class="material-icon bg-gray-100 text-gray-600">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800">ألمنيوم ورقي</div>
+                            <div class="text-sm text-gray-600">30 طبقة - 156 كغ</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mt-6">
+                    <div class="flex space-x-2">
+                        <button onclick="viewOrder(1238)" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all duration-200">
+                            <i class="fas fa-eye ml-2"></i>عرض
+                        </button>
+                        <button onclick="createInvoice(1238)" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all duration-200">
+                            <i class="fas fa-file-invoice ml-2"></i>فاتورة
+                        </button>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600">تاريخ الإنجاز</p>
+                        <p class="font-medium text-green-600">2025-09-29</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample orders data
+        const ordersData = [
+            {
+                id: 1234,
+                orderNumber: '#1234',
+                customerName: 'شركة الأعمال الحديثة',
+                customerPhone: '+963 11 123 4567',
+                customerAddress: 'دمشق - المزة',
+                plateCount: 50,
+                status: 'pending',
+                priority: 'high',
+                createdAt: '2025-09-28',
+                materials: [
+                    { name: 'ورق أبيض A4', quantity: 25, weight: 125, type: 'ورق' },
+                    { name: 'كرتون بني', quantity: 25, weight: 188, type: 'كرتون' }
+                ],
+                currentStage: 1,
+                processingTime: '2:30:45'
+            },
+            {
+                id: 1238,
+                orderNumber: '#1238',
+                customerName: 'شركة المقاولات الكبرى',
+                customerPhone: '+963 11 987 6543',
+                customerAddress: 'دمشق - كفرسوسة',
+                plateCount: 60,
+                status: 'completed',
+                priority: 'low',
+                createdAt: '2025-09-25',
+                completedAt: '2025-09-29',
+                materials: [
+                    { name: 'ورق ملون', quantity: 30, weight: 90, type: 'ورق' },
+                    { name: 'ألمنيوم ورقي', quantity: 30, weight: 156, type: 'معدن' }
+                ],
+                currentStage: 5
+            }
+        ];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrderCharts();
+            updateOrderStatistics();
+            setupEventListeners();
+        });
+
+        function loadOrderCharts() {
+            // Orders by Stage Chart
+            const stageData = [{
+                values: [15, 23, 8, 12, 45],
+                labels: ['قيد الانتظار', 'قيد المعالجة', 'الفرز', 'القص', 'مكتمل'],
+                type: 'pie',
+                marker: {
+                    colors: ['#f59e0b', '#3b82f6', '#8b5cf6', '#10b981', '#059669']
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside'
+            }];
+
+            const stageLayout = {
+                title: '',
+                font: { family: 'Cairo, sans-serif' },
+                margin: { t: 20, r: 20, b: 20, l: 20 },
+                showlegend: true
+            };
+
+            Plotly.newPlot('ordersStageChart', stageData, stageLayout, {responsive: true});
+
+            // Performance Chart
+            const performanceData = {
+                x: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+                y: [45, 52, 48, 61, 55, 67],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'الطلبات المكتملة',
+                line: { color: '#10b981', width: 3 },
+                marker: { color: '#10b981', size: 8 }
+            };
+
+            const performanceLayout = {
+                title: '',
+                xaxis: { title: 'الشهر' },
+                yaxis: { title: 'عدد الطلبات' },
+                font: { family: 'Cairo, sans-serif' },
+                margin: { t: 20, r: 20, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('ordersPerformanceChart', [performanceData], performanceLayout, {responsive: true});
+        }
+
+        function setupEventListeners() {
+            // Add any additional event listeners here
+        }
+
+        function updateOrderStatistics() {
+            // Update statistics based on real data
+            const total = 103;
+            const pending = 15;
+            const processing = 23;
+            const sorting = 8;
+            const cutting = 12;
+            const completed = 45;
+
+            document.getElementById('totalOrders').textContent = total;
+            document.getElementById('pendingOrders').textContent = pending;
+            document.getElementById('processingOrders').textContent = processing;
+            document.getElementById('sortingOrders').textContent = sorting;
+            document.getElementById('cuttingOrders').textContent = cutting;
+            document.getElementById('completedOrders').textContent = completed;
+        }
+
+        function showOrderAnalytics() {
+            alert('سيتم عرض التحليلات المتقدمة للطلبات - سيتم تطويرها قريباً');
+        }
+
+        function showAddOrderModal() {
+            alert('سيتم فتح نافذة إنشاء طلب جديد - سيتم تطويرها قريباً');
+        }
+
+        function approveOrder(orderId) {
+            alert(`تمت الموافقة على الطلب رقم: ${orderId} - سيتم تطويرها قريباً`);
+        }
+
+        function viewOrder(orderId) {
+            alert(`عرض تفاصيل الطلب رقم: ${orderId} - سيتم تطويرها قريباً`);
+        }
+
+        function moveToSorting(orderId) {
+            alert(`نقل الطلب رقم: ${orderId} إلى مرحلة الفرز - سيتم تطويرها قريباً`);
+        }
+
+        function moveToCutting(orderId) {
+            alert(`نقل الطلب رقم: ${orderId} إلى مرحلة القص - سيتم تطويرها قريباً`);
+        }
+
+        function createInvoice(orderId) {
+            alert(`إنشاء فاتورة للطلب رقم: ${orderId} - سيتم تطويرها قريباً`);
+        }
+    </script>
+</body>
+</html>

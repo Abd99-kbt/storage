@@ -1,0 +1,2636 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المستودعات الشاملة - نظام إدارة المستودعات</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 50%, #06d6a0 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #f97316 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #ef4444 100%);
+            --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+        }
+
+        .modern-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15), 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .warehouse-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-modern {
+            border-radius: 16px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-modern:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .input-modern {
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 16px;
+            padding: 16px 20px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: rgba(248, 250, 252, 0.5);
+        }
+
+        .input-modern:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .modal-modern {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content-modern {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 32px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 85vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Mobile Responsive Improvements */
+        @media (max-width: 640px) {
+            .modal-content-modern {
+                max-width: 95vw;
+                max-height: 95vh;
+                margin: 10px;
+                border-radius: 20px;
+            }
+
+            .modal-header-modern {
+                padding: 20px 24px;
+                border-radius: 20px 20px 0 0;
+            }
+
+            .modal-body-modern {
+                padding: 24px;
+            }
+
+            .modal-header-modern h3 {
+                font-size: 1.25rem;
+            }
+
+            .btn-modern {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .input-modern {
+                padding: 12px 16px;
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+
+            .grid {
+                gap: 12px;
+            }
+
+            .modern-card {
+                padding: 20px;
+            }
+
+            .warehouse-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .chart-container {
+                padding: 20px;
+            }
+
+            .warehouse-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .utilization-bar {
+                height: 6px;
+            }
+
+            .capacity-meter {
+                height: 15px;
+            }
+
+            .temperature-value {
+                font-size: 20px;
+            }
+
+            .temperature-unit {
+                font-size: 12px;
+            }
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-maintenance {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 24px;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .utilization-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .utilization-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .warehouse-type-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .alert-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .modal-xl {
+            max-width: 1200px;
+        }
+
+        .warehouse-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 24px;
+        }
+
+        .activity-timeline {
+            position: relative;
+            padding-right: 30px;
+        }
+
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            right: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .activity-item {
+            position: relative;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            right: -22px;
+            top: 20px;
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+
+        .material-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .material-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin-left: 12px;
+        }
+
+        .transfer-animation {
+            animation: transfer 2s ease-in-out infinite;
+        }
+
+        @keyframes transfer {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(10px); }
+        }
+
+        .capacity-meter {
+            position: relative;
+            height: 20px;
+            border-radius: 10px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+
+        .capacity-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .temperature-indicator {
+            position: relative;
+            display: inline-block;
+        }
+
+        .temperature-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .temperature-unit {
+            font-size: 14px;
+            color: #6b7280;
+            margin-right: 4px;
+        }
+
+        .maintenance-schedule {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .security-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .security-secure {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .security-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .security-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="container mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">إدارة المستودعات الشاملة</h1>
+                    <p class="text-gray-600">مراقبة وإدارة جميع المستودعات والعمليات</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="exportWarehousesData()" class="btn-modern bg-gradient-to-r from-purple-500 to-blue-600 text-white">
+                        <i class="fas fa-download ml-2"></i>تصدير البيانات
+                    </button>
+                    <button onclick="showAdvancedAnalytics()" class="btn-modern btn-primary">
+                        <i class="fas fa-chart-line ml-2"></i>التحليلات المتقدمة
+                    </button>
+                    <button onclick="showWarehouseStatus()" class="btn-modern bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                        <i class="fas fa-heartbeat ml-2"></i>حالة المستودعات
+                    </button>
+                    <button onclick="showMaintenanceModal()" class="btn-modern bg-gradient-to-r from-orange-500 to-red-500 text-white">
+                        <i class="fas fa-tools ml-2"></i>طلب صيانة
+                    </button>
+                    <button onclick="showInventoryModal()" class="btn-modern bg-gradient-to-r from-teal-500 to-green-500 text-white">
+                        <i class="fas fa-clipboard-check ml-2"></i>جرد المخزون
+                    </button>
+                    <button onclick="showAddWarehouseModal()" class="btn-modern btn-success">
+                        <i class="fas fa-plus ml-2"></i>إضافة مستودع جديد
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Warehouse Modal -->
+        <div id="addWarehouseModal" class="fixed inset-0 z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="absolute inset-0 bg-black opacity-50"></div>
+                <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-t-2xl">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-2xl font-bold">إضافة مستودع جديد</h3>
+                            <div class="flex items-center space-x-3">
+                                <button onclick="goBackFromModal('addWarehouseModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-arrow-right text-lg"></i>
+                                </button>
+                                <button onclick="closeAddWarehouseModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="addWarehouseForm" onsubmit="saveNewWarehouse(event)" class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">اسم المستودع *</label>
+                                <input type="text" id="warehouseName" name="name" required class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">نوع المستودع *</label>
+                                <select id="warehouseType" name="type" required class="input-modern w-full">
+                                    <option value="">اختر النوع</option>
+                                    <option value="main">رئيسي</option>
+                                    <option value="cutting">قصاصة</option>
+                                    <option value="sorting">فرازة</option>
+                                    <option value="safekeeping">أمانات</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">السعة (طن)</label>
+                                <input type="number" id="warehouseCapacity" name="capacity" step="0.01" class="input-modern w-full">
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">الموقع</label>
+                                <textarea id="warehouseLocation" name="location" rows="3" class="input-modern w-full"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">أمين المستودع</label>
+                                <select id="warehouseManager" name="manager_id" class="input-modern w-full">
+                                    <option value="">اختر أمين المستودع</option>
+                                </select>
+                            </div>
+
+                            <div class="md:col-span-2 flex space-x-4">
+                                <button type="submit" class="btn-modern btn-success flex-1">
+                                    <i class="fas fa-save ml-2"></i>حفظ المستودع
+                                </button>
+                                <button type="button" onclick="closeAddWarehouseModal()" class="btn-modern bg-gray-600 text-white">
+                                    <i class="fas fa-times ml-2"></i>إلغاء
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warehouse Overview Cards -->
+        <div class="warehouse-grid mb-8">
+            <!-- Warehouse cards will be populated by JavaScript -->
+        </div>
+
+        <!-- Warehouse Analytics -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="modern-card">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">استغلال المستودعات</h3>
+                <div id="warehouseUtilizationChart" style="height: 350px;"></div>
+            </div>
+
+            <div class="modern-card">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">توزيع المواد حسب النوع</h3>
+                <div id="warehouseMaterialsChart" style="height: 350px;"></div>
+            </div>
+        </div>
+
+        <!-- Warehouse Operations -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Quick Actions -->
+            <div class="modern-card">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">العمليات السريعة</h3>
+                <div class="space-y-4">
+                    <button onclick="showTransferModal()" class="w-full btn-modern btn-primary text-left p-4">
+                        <i class="fas fa-exchange-alt text-xl ml-3"></i>
+                        <div>
+                            <div class="font-medium">نقل المواد</div>
+                            <div class="text-sm opacity-90">نقل المواد بين المستودعات</div>
+                        </div>
+                    </button>
+                    <button onclick="showMaintenanceModal()" class="w-full btn-modern btn-success text-left p-4">
+                        <i class="fas fa-tools text-xl ml-3"></i>
+                        <div>
+                            <div class="font-medium">طلب صيانة</div>
+                            <div class="text-sm opacity-90">طلب صيانة للمستودع</div>
+                        </div>
+                    </button>
+                    <button onclick="showInventoryModal()" class="w-full btn-modern bg-gradient-to-r from-purple-500 to-purple-600 text-white text-left p-4">
+                        <i class="fas fa-clipboard-list text-xl ml-3"></i>
+                        <div>
+                            <div class="font-medium">جرد المخزون</div>
+                            <div class="text-sm opacity-90">عمل جرد شامل للمخزون</div>
+                        </div>
+                    </button>
+                    <button onclick="showReportModal()" class="w-full btn-modern bg-gradient-to-r from-orange-500 to-red-500 text-white text-left p-4">
+                        <i class="fas fa-chart-pie text-xl ml-3"></i>
+                        <div>
+                            <div class="font-medium">تقرير المستودع</div>
+                            <div class="text-sm opacity-90">تقرير مفصل عن المستودع</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="modern-card">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">آخر الأنشطة</h3>
+                <div class="activity-timeline" id="warehouseActivities">
+                    <div class="activity-item">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center ml-3">
+                                    <i class="fas fa-plus text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800">جاري تحميل الأنشطة...</p>
+                                    <p class="text-sm text-gray-600">يرجى الانتظار</p>
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500">الآن</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warehouse Status -->
+            <div class="modern-card">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">حالة المستودعات</h3>
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">درجة الحرارة</span>
+                            <div class="temperature-indicator">
+                                <span class="temperature-value">22</span><span class="temperature-unit">°C</span>
+                            </div>
+                        </div>
+                        <div class="capacity-meter">
+                            <div class="capacity-fill bg-gradient-to-r from-green-400 to-blue-500" style="width: 70%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">الرطوبة</span>
+                            <span class="text-sm font-medium">45%</span>
+                        </div>
+                        <div class="capacity-meter">
+                            <div class="capacity-fill bg-gradient-to-r from-blue-400 to-purple-500" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-800 mb-2">صيانة قادمة</h4>
+                        <p class="text-sm text-gray-600">صيانة نظام التهوية</p>
+                        <p class="text-xs text-gray-500 mt-1">غداً - 10:00 صباحاً</p>
+                    </div>
+                    <div class="security-status security-secure">
+                        <i class="fas fa-shield-alt ml-1"></i>آمن
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warehouse Details Modal -->
+        <div id="warehouseDetailsModal" class="fixed inset-0 z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="absolute inset-0 bg-black opacity-50"></div>
+                <div class="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-2xl">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-2xl font-bold">تفاصيل المستودع</h3>
+                            <div class="flex items-center space-x-3">
+                                <button onclick="goBackFromModal('warehouseDetailsModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-arrow-right text-lg"></i>
+                                </button>
+                                <button onclick="closeWarehouseDetailsModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Warehouse Info -->
+                            <div>
+                                <h4 class="font-medium text-gray-800 mb-4">معلومات أساسية</h4>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">اسم المستودع:</span>
+                                        <span class="font-medium" id="detailWarehouseName"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">النوع:</span>
+                                        <span class="font-medium" id="detailWarehouseType"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">السعة:</span>
+                                        <span class="font-medium" id="detailWarehouseCapacity"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">الموقع:</span>
+                                        <span class="font-medium" id="detailWarehouseLocation"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">مدير المستودع:</span>
+                                        <span class="font-medium" id="detailWarehouseManager"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">الحالة:</span>
+                                        <span class="font-medium" id="detailWarehouseStatus"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Warehouse Statistics -->
+                            <div>
+                                <h4 class="font-medium text-gray-800 mb-4">الإحصائيات</h4>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">إجمالي المواد:</span>
+                                        <span class="font-medium" id="detailTotalMaterials">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">إجمالي الكمية:</span>
+                                        <span class="font-medium" id="detailTotalQuantity">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">إجمالي الوزن:</span>
+                                        <span class="font-medium" id="detailTotalWeight">0 كغ</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">القيمة الإجمالية:</span>
+                                        <span class="font-medium" id="detailTotalValue">0 ليرة سورية</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">نسبة الاستغلال:</span>
+                                        <span class="font-medium" id="detailUtilization">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Materials in Warehouse -->
+                        <div class="mt-8">
+                            <h4 class="font-medium text-gray-800 mb-4">المواد في المستودع</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="warehouseMaterialsList">
+                                <!-- Materials will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-4 mt-8">
+                            <button onclick="closeWarehouseDetailsModal()" class="btn-modern bg-gray-600 text-white">
+                                <i class="fas fa-times ml-2"></i>إغلاق
+                            </button>
+                            <button onclick="editWarehouseFromDetails()" class="btn-modern btn-primary">
+                                <i class="fas fa-edit ml-2"></i>تعديل
+                            </button>
+                            <button onclick="showTransferFromDetails()" class="btn-modern btn-success">
+                                <i class="fas fa-exchange-alt ml-2"></i>نقل مواد
+                            </button>
+                        </div>
+                    </div>
+            </div>
+        </div>
+
+        <!-- Transfer Materials Modal -->
+        <div id="transferModal" class="fixed inset-0 z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="absolute inset-0 bg-black opacity-50"></div>
+                <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="bg-gradient-to-r from-green-500 to-blue-600 text-white p-6 rounded-t-2xl">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-2xl font-bold">نقل المواد</h3>
+                            <div class="flex items-center space-x-3">
+                                <button onclick="goBackFromModal('transferModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-arrow-right text-lg"></i>
+                                </button>
+                                <button onclick="closeTransferModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <form id="transferForm" onsubmit="executeTransfer(event)" class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">من المستودع</label>
+                                <input type="text" id="transferFromWarehouseName" readonly class="input-modern w-full bg-gray-100">
+                                <input type="hidden" id="transferFromWarehouse" name="from_warehouse_id">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">إلى المستودع *</label>
+                                <select id="transferToWarehouse" name="to_warehouse_id" required class="input-modern w-full">
+                                    <option value="">اختر المستودع الهدف</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">المادة *</label>
+                                <select id="transferMaterial" name="material_id" required class="input-modern w-full">
+                                    <option value="">اختر المادة</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">الكمية *</label>
+                                <input type="number" id="transferQuantity" name="quantity" required min="1" class="input-modern w-full">
+                            </div>
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">ملاحظات</label>
+                            <textarea id="transferNotes" name="notes" rows="3" class="input-modern w-full" placeholder="سبب النقل والملاحظات"></textarea>
+                        </div>
+                        <div class="flex justify-end space-x-4">
+                            <button type="button" onclick="closeTransferModal()" class="btn-modern bg-gray-600 text-white">
+                                <i class="fas fa-times ml-2"></i>إلغاء
+                            </button>
+                            <button type="submit" class="btn-modern btn-success">
+                                <i class="fas fa-exchange-alt ml-2"></i>نقل المواد
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:3000/api';
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        let allWarehouses = [];
+        let allUsers = [];
+
+        // Fix API calls to use full URL
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            if (url.startsWith('/api/')) {
+                url = 'http://localhost:3000' + url;
+            }
+            return originalFetch(url, options);
+        };
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Checking authentication...');
+            console.log('Auth Token:', authToken);
+            console.log('Current User:', currentUser);
+
+            // Check authentication
+            if (!authToken || !currentUser) {
+                console.log('No auth token or user found, redirecting to login...');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Check if user has permission to manage warehouses
+            if (!hasPermission('manage_warehouses')) {
+                console.log('User does not have warehouse management permission');
+                showMessage('error', 'ليس لديك صلاحية للوصول إلى إدارة المستودعات');
+                return;
+            }
+
+            console.log('User has permission, testing backend connection...');
+
+            // Test backend connection first
+            testBackendConnection().then(() => {
+                console.log('Backend connection successful, loading data...');
+                loadWarehousesData();
+                loadWarehouseManagers();
+                setupEventListeners();
+            }).catch((error) => {
+                console.error('Backend connection test failed:', error);
+                showMessage('error', 'لا يمكن الاتصال بالخادم. تأكد من أن الخادم يعمل على المنفذ 3000');
+            });
+        });
+
+        // Test backend connection
+        async function testBackendConnection() {
+            try {
+                const response = await fetch('http://localhost:3000/api/warehouses', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok || response.status === 401 || response.status === 403) {
+                    console.log('Backend connection successful');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Backend connection failed:', error);
+                throw error;
+            }
+        }
+
+        // Check permissions
+        function hasPermission(permission) {
+            if (!currentUser || !currentUser.userType) return false;
+            const permissions = {
+                admin: ['manage_users', 'manage_warehouses', 'manage_materials', 'manage_orders', 'manage_invoices', 'view_reports', 'manage_settings'],
+                warehouse_manager: ['manage_warehouses', 'manage_materials', 'transfer_materials', 'view_reports'],
+                cutting_manager: ['manage_materials', 'manage_orders', 'view_reports', 'approve_orders'],
+                sorting_manager: ['manage_materials', 'manage_orders', 'view_reports', 'approve_orders'],
+                accountant: ['manage_invoices', 'view_reports', 'export_data', 'manage_orders'],
+                order_tracker: ['manage_orders', 'view_reports'],
+                delivery_manager: ['manage_orders', 'manage_invoices', 'view_reports'],
+                sales: ['manage_orders', 'view_reports']
+            };
+            return permissions[currentUser.userType] && permissions[currentUser.userType].includes(permission);
+        }
+
+        // Load warehouses data
+        async function loadWarehousesData() {
+            try {
+                console.log('Loading warehouses data...');
+                const response = await fetch('http://localhost:3000/api/warehouses', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                console.log('Warehouses response status:', response.status);
+
+                if (response.ok) {
+                    allWarehouses = await response.json();
+                    console.log('Warehouses loaded successfully:', allWarehouses.length, 'warehouses');
+                    updateWarehousesGrid(allWarehouses);
+                } else {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    showMessage('error', 'خطأ في تحميل بيانات المستودعات');
+                }
+            } catch (error) {
+                console.error('Error loading warehouses:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل بيانات المستودعات');
+            }
+        }
+
+        // Load warehouse managers
+        async function loadWarehouseManagers() {
+            try {
+                const response = await fetch('http://localhost:3000/api/users?userType=warehouse_manager', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    allUsers = await response.json();
+                    const select = document.getElementById('warehouseManager');
+                    select.innerHTML = '<option value="">اختر أمين المستودع</option>';
+
+                    allUsers.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.textContent = user.name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading warehouse managers:', error);
+            }
+        }
+
+        // Update warehouses grid
+        function updateWarehousesGrid(warehouses) {
+            const grid = document.querySelector('.warehouse-grid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+
+            if (warehouses.length === 0) {
+                grid.innerHTML = '<p class="text-center text-gray-600 py-12">لا توجد مستودعات للعرض</p>';
+                return;
+            }
+
+            warehouses.forEach(warehouse => {
+                const warehouseCard = document.createElement('div');
+                warehouseCard.className = 'modern-card warehouse-item';
+                warehouseCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">${warehouse.name}</h3>
+                            <p class="text-gray-600 text-sm">المدير: ${warehouse.manager_name || 'غير محدد'}</p>
+                        </div>
+                        <div class="warehouse-icon bg-gradient-to-r ${getWarehouseIconColor(warehouse.type)}">
+                            <i class="fas ${getWarehouseIcon(warehouse.type)}"></i>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">الاستغلال</span>
+                                <span class="font-medium">${warehouse.utilization || 0}%</span>
+                            </div>
+                            <div class="utilization-bar">
+                                <div class="utilization-fill bg-gradient-to-r ${getUtilizationColor(warehouse.utilization)}" style="width: ${warehouse.utilization || 0}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">المواد:</span>
+                                <span class="font-medium">${warehouse.materials_count || 0}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">الوزن:</span>
+                                <span class="font-medium">${warehouse.total_weight ? parseFloat(warehouse.total_weight).toFixed(1) : 0} طن</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <span class="status-badge ${getStatusBadgeClass(warehouse.is_active)}">
+                                ${warehouse.is_active ? 'نشط' : 'غير نشط'}
+                            </span>
+                            <div class="flex space-x-2">
+                                <button onclick="viewWarehouseDetails(${warehouse.id})" class="btn-modern btn-primary" style="padding: 8px 12px; font-size: 12px;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="editWarehouse(${warehouse.id})" class="btn-modern btn-success" style="padding: 8px 12px; font-size: 12px;">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteWarehouse(${warehouse.id})" class="btn-modern btn-danger" style="padding: 8px 12px; font-size: 12px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(warehouseCard);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Add any additional event listeners here
+        }
+
+        // Modal functions
+        function showAddWarehouseModal() {
+            document.getElementById('addWarehouseModal').classList.remove('hidden');
+            document.getElementById('addWarehouseModal').classList.add('flex');
+        }
+
+        function closeAddWarehouseModal() {
+            document.getElementById('addWarehouseModal').classList.add('hidden');
+            document.getElementById('addWarehouseModal').classList.remove('flex');
+            clearWarehouseForm();
+        }
+
+        function clearWarehouseForm() {
+            const inputs = ['warehouseName', 'warehouseType', 'warehouseCapacity', 'warehouseLocation', 'warehouseManager'];
+            inputs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.value = '';
+            });
+        }
+
+        async function saveNewWarehouse(event) {
+            event.preventDefault();
+
+            const warehouseId = document.getElementById('addWarehouseForm').dataset.warehouseId;
+            const isUpdate = !!warehouseId;
+
+            const warehouseData = {
+                name: document.getElementById('warehouseName').value,
+                type: document.getElementById('warehouseType').value,
+                capacity: parseFloat(document.getElementById('warehouseCapacity').value) || null,
+                location: document.getElementById('warehouseLocation').value || null,
+                manager_id: document.getElementById('warehouseManager').value ? parseInt(document.getElementById('warehouseManager').value) : null
+            };
+
+            try {
+                const url = isUpdate ? `/api/warehouses/${warehouseId}` : '/api/warehouses';
+                const method = isUpdate ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(warehouseData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', `تم ${isUpdate ? 'تحديث' : 'إضافة'} المستودع بنجاح`);
+                    closeAddWarehouseModal();
+                    loadWarehousesData();
+                } else {
+                    showMessage('error', result.errors ? result.errors.map(e => e.msg).join(', ') : result.message || `خطأ في ${isUpdate ? 'تحديث' : 'إضافة'} المستودع`);
+                }
+            } catch (error) {
+                console.error(`Error ${isUpdate ? 'updating' : 'saving'} warehouse:`, error);
+                showMessage('error', `حدث خطأ أثناء ${isUpdate ? 'تحديث' : 'حفظ'} المستودع`);
+            }
+        }
+
+        // Warehouse management functions
+        async function viewWarehouseDetails(id) {
+            try {
+                console.log('Viewing warehouse details for ID:', id);
+
+                // Find warehouse data from local cache first
+                const warehouse = allWarehouses.find(w => w.id === id);
+                console.log('Found warehouse:', warehouse);
+
+                if (!warehouse) {
+                    console.error('Warehouse not found in local cache');
+                    showMessage('error', 'المستودع غير موجود');
+                    return;
+                }
+
+                console.log('Showing warehouse details modal...');
+
+                // Show loading state
+                document.getElementById('warehouseDetailsModal').classList.remove('hidden');
+                document.getElementById('warehouseDetailsModal').classList.add('flex');
+
+                // Store warehouse ID for later use
+                document.getElementById('warehouseDetailsModal').dataset.warehouseId = id;
+
+                // Populate basic warehouse information
+                document.getElementById('detailWarehouseName').textContent = warehouse.name;
+                document.getElementById('detailWarehouseType').textContent = getWarehouseTypeText(warehouse.type);
+                document.getElementById('detailWarehouseCapacity').textContent = warehouse.capacity ? `${warehouse.capacity} طن` : 'غير محدد';
+                document.getElementById('detailWarehouseLocation').textContent = warehouse.location || 'غير محدد';
+                document.getElementById('detailWarehouseManager').textContent = warehouse.manager_name || 'غير محدد';
+                document.getElementById('detailWarehouseStatus').textContent = warehouse.is_active ? 'نشط' : 'غير نشط';
+
+                console.log('Loading detailed warehouse data...');
+
+                // Load detailed warehouse data from API
+                await loadWarehouseDetails(id);
+                await loadWarehouseMaterials(id);
+
+                console.log('Warehouse details loaded successfully');
+
+            } catch (error) {
+                console.error('Error viewing warehouse details:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل تفاصيل المستودع');
+            }
+        }
+
+        async function loadWarehouseDetails(warehouseId) {
+            try {
+                console.log('Loading warehouse utilization details for ID:', warehouseId);
+
+                // Load warehouse utilization details
+                const utilizationResponse = await fetch(`http://localhost:3000/api/warehouses/${warehouseId}/utilization`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                console.log('Utilization response status:', utilizationResponse.status);
+
+                if (utilizationResponse.ok) {
+                    const utilizationData = await utilizationResponse.json();
+                    console.log('Utilization data:', utilizationData);
+
+                    // Update statistics in modal
+                    document.getElementById('detailTotalMaterials').textContent = utilizationData.materials_count || 0;
+                    document.getElementById('detailTotalQuantity').textContent = utilizationData.total_quantity || 0;
+                    document.getElementById('detailTotalWeight').textContent = `${utilizationData.total_weight ? parseFloat(utilizationData.total_weight).toFixed(1) : 0} طن`;
+                    document.getElementById('detailTotalValue').textContent = `${utilizationData.total_value ? parseFloat(utilizationData.total_value).toFixed(2) : 0} ليرة سورية`;
+                    document.getElementById('detailUtilization').textContent = `${utilizationData.utilization_percentage ? parseFloat(utilizationData.utilization_percentage).toFixed(1) : 0}%`;
+                } else {
+                    console.error('Failed to load utilization data');
+                }
+
+                console.log('Loading warehouse statistics...');
+
+                // Load warehouse statistics
+                const statsResponse = await fetch(`http://localhost:3000/api/warehouses/${warehouseId}/stats`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                console.log('Stats response status:', statsResponse.status);
+
+                if (statsResponse.ok) {
+                    const statsData = await statsResponse.json();
+                    console.log('Stats data:', statsData);
+                    // Update additional stats if needed
+                } else {
+                    console.error('Failed to load stats data');
+                }
+
+            } catch (error) {
+                console.error('Error loading warehouse details:', error);
+            }
+        }
+
+        async function loadWarehouseMaterials(warehouseId) {
+            try {
+                console.log('Loading materials for warehouse ID:', warehouseId);
+
+                const response = await fetch(`http://localhost:3000/api/materials/warehouse/${warehouseId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                console.log('Materials response status:', response.status);
+
+                if (response.ok) {
+                    const materials = await response.json();
+                    console.log('Materials loaded successfully:', materials.length, 'materials');
+                    displayWarehouseMaterials(materials);
+                } else {
+                    console.error('Error loading warehouse materials:', response.status);
+                    displayWarehouseMaterials([]);
+                }
+            } catch (error) {
+                console.error('Error loading warehouse materials:', error);
+                displayWarehouseMaterials([]);
+            }
+        }
+
+        function displayWarehouseMaterials(materials) {
+            const materialsList = document.getElementById('warehouseMaterialsList');
+            if (!materialsList) return;
+
+            if (materials.length === 0) {
+                materialsList.innerHTML = '<p class="text-center text-gray-600 py-8">لا توجد مواد في هذا المستودع</p>';
+                return;
+            }
+
+            materialsList.innerHTML = '';
+
+            materials.forEach(material => {
+                const materialElement = document.createElement('div');
+                materialElement.className = 'material-item';
+                materialElement.innerHTML = `
+                    <div class="material-icon bg-gradient-to-r ${getMaterialIconColor(material.type)}">
+                        <i class="fas ${getMaterialIcon(material.type)}"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-800">${material.name}</div>
+                        <div class="text-sm text-gray-600">
+                            الكمية: ${material.quantity} |
+                            الوزن: ${material.weight ? (parseFloat(material.weight) * parseInt(material.quantity)).toFixed(1) : 0} طن |
+                            النوع: ${material.type || 'غير محدد'}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            الفاتورة: ${material.invoice_number || 'غير محدد'} |
+                            الجودة: ${material.quality || 'غير محدد'}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-medium text-gray-800">${material.cost ? (parseFloat(material.cost) * parseInt(material.quantity)).toFixed(2) : 0} ليرة سورية</div>
+                        <div class="text-xs px-2 py-1 rounded-full ${getMaterialStatusBadgeClass(material.status)}">
+                            ${getMaterialStatusText(material.status)}
+                        </div>
+                    </div>
+                `;
+                materialsList.appendChild(materialElement);
+            });
+        }
+
+        function getMaterialIconColor(type) {
+            const colors = {
+                'ورق': 'from-blue-500 to-blue-600',
+                'كرتون': 'from-green-500 to-green-600',
+                'بلاستيك': 'from-purple-500 to-purple-600',
+                'معدن': 'from-orange-500 to-orange-600',
+                'زجاج': 'from-cyan-500 to-cyan-600'
+            };
+            return colors[type] || 'from-gray-500 to-gray-600';
+        }
+
+        function getMaterialIcon(type) {
+            const icons = {
+                'ورق': 'fa-file-alt',
+                'كرتون': 'fa-box',
+                'بلاستيك': 'fa-recycle',
+                'معدن': 'fa-cog',
+                'زجاج': 'fa-flask'
+            };
+            return icons[type] || 'fa-cube';
+        }
+
+        async function editWarehouse(id) {
+            const warehouse = allWarehouses.find(w => w.id === id);
+            if (!warehouse) return;
+
+            // Fill form with warehouse data
+            document.getElementById('warehouseName').value = warehouse.name;
+            document.getElementById('warehouseType').value = warehouse.type;
+            document.getElementById('warehouseCapacity').value = warehouse.capacity || '';
+            document.getElementById('warehouseLocation').value = warehouse.location || '';
+            document.getElementById('warehouseManager').value = warehouse.manager_id || '';
+
+            // Store warehouse ID for update
+            document.getElementById('addWarehouseForm').dataset.warehouseId = id;
+
+            // Show modal
+            showAddWarehouseModal();
+        }
+
+        async function deleteWarehouse(id) {
+            const warehouse = allWarehouses.find(w => w.id === id);
+            if (!confirm(`هل أنت متأكد من حذف المستودع "${warehouse?.name || 'هذا المستودع'}"؟ لا يمكن التراجع عن هذا الإجراء.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/warehouses/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'تم حذف المستودع بنجاح');
+                    loadWarehousesData();
+                } else {
+                    const errorData = await response.json();
+                    showMessage('error', errorData.message || 'خطأ في حذف المستودع');
+                }
+            } catch (error) {
+                console.error('Error deleting warehouse:', error);
+                showMessage('error', 'حدث خطأ أثناء حذف المستودع');
+            }
+        }
+
+        // Export functionality
+        async function exportWarehousesData() {
+            try {
+                const response = await fetch('/api/warehouses/export', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'warehouses_data.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    showMessage('error', 'خطأ في تصدير البيانات');
+                }
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showMessage('error', 'حدث خطأ أثناء تصدير البيانات');
+            }
+        }
+
+        // Helper functions
+        function getWarehouseIconColor(type) {
+            const colors = {
+                'main': 'from-blue-500 to-blue-600',
+                'cutting': 'from-green-500 to-green-600',
+                'sorting': 'from-purple-500 to-purple-600',
+                'safekeeping': 'from-orange-500 to-orange-600'
+            };
+            return colors[type] || 'from-gray-500 to-gray-600';
+        }
+
+        function getWarehouseIcon(type) {
+            const icons = {
+                'main': 'fa-warehouse',
+                'cutting': 'fa-cut',
+                'sorting': 'fa-sort',
+                'safekeeping': 'fa-safe'
+            };
+            return icons[type] || 'fa-warehouse';
+        }
+
+        function getUtilizationColor(utilization) {
+            if (utilization > 80) return 'from-red-500 to-red-600';
+            if (utilization > 60) return 'from-orange-500 to-orange-600';
+            return 'from-green-500 to-green-600';
+        }
+
+        function getStatusBadgeClass(isActive) {
+            return isActive ? 'status-active' : 'status-inactive';
+        }
+
+        function getMaterialStatusBadgeClass(status) {
+            const statusClasses = {
+                'available': 'bg-green-100 text-green-800',
+                'reserved': 'bg-yellow-100 text-yellow-800',
+                'damaged': 'bg-red-100 text-red-800',
+                'expired': 'bg-gray-100 text-gray-800'
+            };
+            return statusClasses[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getMaterialStatusText(status) {
+            const statusTexts = {
+                'available': 'متاح',
+                'reserved': 'محجوز',
+                'damaged': 'تالف',
+                'expired': 'منتهي الصلاحية'
+            };
+            return statusTexts[status] || status;
+        }
+
+        function showMessage(type, message) {
+            console.log(`Warehouse message (${type}):`, message);
+            alert(message);
+        }
+
+        // Advanced Analytics Functions
+        async function showAdvancedAnalytics() {
+            try {
+                console.log('Loading advanced warehouse analytics...');
+
+                const response = await fetch('http://localhost:3000/api/analytics/warehouses/advanced', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const analytics = await response.json();
+                    displayAdvancedAnalytics(analytics);
+                } else {
+                    showMessage('error', 'خطأ في تحميل التحليلات المتقدمة');
+                }
+            } catch (error) {
+                console.error('Error loading advanced analytics:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل التحليلات');
+            }
+        }
+
+        function displayAdvancedAnalytics(analytics) {
+            // Create or update analytics modal
+            let modal = document.getElementById('advancedAnalyticsModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'advancedAnalyticsModal';
+                modal.className = 'fixed inset-0 z-50 hidden';
+                modal.innerHTML = `
+                    <div class="flex items-center justify-center min-h-screen p-4">
+                        <div class="absolute inset-0 bg-black opacity-50"></div>
+                        <div class="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                            <div class="bg-gradient-to-r from-purple-500 to-blue-600 text-white p-6 rounded-t-2xl">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-2xl font-bold">التحليلات المتقدمة للمستودعات</h3>
+                                    <div class="flex items-center space-x-3">
+                                        <button onclick="goBackFromModal('advancedAnalyticsModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-arrow-right text-lg"></i>
+                                        </button>
+                                        <button onclick="closeAdvancedAnalyticsModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div id="analyticsContent">
+                                    <!-- Analytics content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            // Populate analytics content
+            const content = document.getElementById('analyticsContent');
+            content.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="modern-card">
+                        <h4 class="text-xl font-semibold text-gray-800 mb-6">كفاءة المستودعات</h4>
+                        <div id="efficiencyChart" style="height: 350px;"></div>
+                    </div>
+                    <div class="modern-card">
+                        <h4 class="text-xl font-semibold text-gray-800 mb-6">اتجاهات الحركة</h4>
+                        <div id="trendsChart" style="height: 350px;"></div>
+                    </div>
+                </div>
+                <div class="modern-card">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-6">تفاصيل المستودعات</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-right py-3 px-4">اسم المستودع</th>
+                                    <th class="text-right py-3 px-4">النوع</th>
+                                    <th class="text-right py-3 px-4">الاستغلال</th>
+                                    <th class="text-right py-3 px-4">الحركات</th>
+                                    <th class="text-right py-3 px-4">القيمة</th>
+                                    <th class="text-right py-3 px-4">الكفاءة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="analyticsTableBody">
+                                ${analytics.map(warehouse => `
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="py-3 px-4 font-medium">${warehouse.name}</td>
+                                        <td class="py-3 px-4">${getWarehouseTypeText(warehouse.type)}</td>
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-16 h-2 bg-gray-200 rounded-full mr-2">
+                                                    <div class="h-full bg-gradient-to-r ${getUtilizationColor(warehouse.utilization_percentage)} rounded-full" style="width: ${parseFloat(warehouse.utilization_percentage) || 0}%"></div>
+                                                </div>
+                                                <span class="text-sm">${parseFloat(warehouse.utilization_percentage) || 0}%</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4">${warehouse.total_movements || 0}</td>
+                                        <td class="py-3 px-4">${warehouse.total_value ? parseFloat(warehouse.total_value).toFixed(0) : 0} ليرة سورية</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 rounded-full text-xs ${getEfficiencyClass(warehouse.utilization_percentage)}">
+                                                ${getEfficiencyText(warehouse.utilization_percentage)}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Initialize charts
+            initializeAnalyticsCharts(analytics);
+        }
+
+        function initializeAnalyticsCharts(analytics) {
+            // Efficiency chart
+            const efficiencyData = analytics.map(w => ({
+                x: w.name,
+                y: w.utilization_percentage || 0,
+                type: 'bar',
+                name: 'نسبة الاستغلال'
+            }));
+
+            const efficiencyLayout = {
+                title: '',
+                xaxis: { title: 'المستودع' },
+                yaxis: { title: 'نسبة الاستغلال (%)' },
+                font: { family: 'Cairo, sans-serif' }
+            };
+
+            Plotly.newPlot('efficiencyChart', efficiencyData, efficiencyLayout, {responsive: true});
+
+            // Trends chart (mock data for now)
+            const trendsData = [{
+                x: ['يوم 1', 'يوم 2', 'يوم 3', 'يوم 4', 'يوم 5'],
+                y: [12, 19, 15, 25, 22],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'الحركات اليومية',
+                line: { color: '#667eea', width: 3 }
+            }];
+
+            const trendsLayout = {
+                title: '',
+                xaxis: { title: 'اليوم' },
+                yaxis: { title: 'عدد الحركات' },
+                font: { family: 'Cairo, sans-serif' }
+            };
+
+            Plotly.newPlot('trendsChart', trendsData, trendsLayout, {responsive: true});
+        }
+
+        function getEfficiencyClass(percentage) {
+            if (percentage > 80) return 'bg-green-100 text-green-800';
+            if (percentage > 50) return 'bg-blue-100 text-blue-800';
+            if (percentage > 25) return 'bg-yellow-100 text-yellow-800';
+            return 'bg-red-100 text-red-800';
+        }
+
+        function getEfficiencyText(percentage) {
+            if (percentage > 80) return 'ممتاز';
+            if (percentage > 50) return 'جيد';
+            if (percentage > 25) return 'مقبول';
+            return 'ضعيف';
+        }
+
+        function closeAdvancedAnalyticsModal() {
+            const modal = document.getElementById('advancedAnalyticsModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Placeholder functions for features not yet implemented
+        function showWarehouseAnalytics() {
+            showAdvancedAnalytics();
+        }
+
+        // Additional helper functions for new features
+        function getUtilizationColor(percentage) {
+            if (percentage > 90) return 'from-red-500 to-red-600';
+            if (percentage > 70) return 'from-orange-500 to-orange-600';
+            if (percentage > 50) return 'from-yellow-500 to-yellow-600';
+            return 'from-green-500 to-green-600';
+        }
+
+        function getUtilizationText(percentage) {
+            if (percentage > 90) return 'مكتظ';
+            if (percentage > 70) return 'مستغل جيداً';
+            if (percentage > 50) return 'مستغل متوسط';
+            return 'متوفر';
+        }
+
+        async function showTransferModal() {
+            // Load available warehouses for transfer
+            const toWarehouseSelect = document.getElementById('transferToWarehouse');
+            toWarehouseSelect.innerHTML = '<option value="">اختر المستودع الهدف</option>';
+
+            allWarehouses.forEach(warehouse => {
+                const option = document.createElement('option');
+                option.value = warehouse.id;
+                option.textContent = warehouse.name;
+                toWarehouseSelect.appendChild(option);
+            });
+
+            document.getElementById('transferModal').classList.remove('hidden');
+            document.getElementById('transferModal').classList.add('flex');
+        }
+
+        // Warehouse Status Monitoring
+        async function showWarehouseStatus() {
+            try {
+                console.log('Loading warehouse status monitoring...');
+
+                // Load current sensor data and alerts
+                const alertsResponse = await fetch(`http://localhost:3000/api/warehouses/${allWarehouses[0]?.id || 1}/alerts`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (alertsResponse.ok) {
+                    const alerts = await alertsResponse.json();
+                    displayWarehouseStatus(alerts);
+                } else {
+                    showMessage('error', 'خطأ في تحميل حالة المستودعات');
+                }
+            } catch (error) {
+                console.error('Error loading warehouse status:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل حالة المستودعات');
+            }
+        }
+
+        function displayWarehouseStatus(alerts) {
+            // Create or update status modal
+            let modal = document.getElementById('warehouseStatusModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'warehouseStatusModal';
+                modal.className = 'fixed inset-0 z-50 hidden';
+                modal.innerHTML = `
+                    <div class="flex items-center justify-center min-h-screen p-4">
+                        <div class="absolute inset-0 bg-black opacity-50"></div>
+                        <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-6 rounded-t-2xl">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-2xl font-bold">مراقبة حالة المستودعات</h3>
+                                    <div class="flex items-center space-x-3">
+                                        <button onclick="goBackFromModal('warehouseStatusModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-arrow-right text-lg"></i>
+                                        </button>
+                                        <button onclick="closeWarehouseStatusModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div id="statusContent">
+                                    <!-- Status content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            // Populate status content
+            const content = document.getElementById('statusContent');
+            content.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="modern-card">
+                        <h4 class="text-xl font-semibold text-gray-800 mb-6">حالة المستودعات الحالية</h4>
+                        <div class="space-y-6">
+                            ${allWarehouses.map(warehouse => `
+                                <div class="border border-gray-200 rounded-lg p-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h5 class="font-medium text-gray-800">${warehouse.name}</h5>
+                                        <span class="px-3 py-1 rounded-full text-sm ${warehouse.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                            ${warehouse.is_active ? 'نشط' : 'غير نشط'}
+                                        </span>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span class="text-gray-600">النوع:</span>
+                                            <span class="font-medium">${getWarehouseTypeText(warehouse.type)}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600">السعة:</span>
+                                            <span class="font-medium">${warehouse.capacity || 'غير محدد'} طن</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600">الموقع:</span>
+                                            <span class="font-medium">${warehouse.location || 'غير محدد'}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600">المدير:</span>
+                                            <span class="font-medium">${warehouse.manager_name || 'غير محدد'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="text-gray-600">درجة الحرارة</span>
+                                            <span class="font-medium">22°C</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-gradient-to-r from-green-400 to-blue-500 h-2 rounded-full" style="width: 70%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="text-gray-600">الرطوبة</span>
+                                            <span class="font-medium">45%</span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2">
+                                            <div class="bg-gradient-to-r from-blue-400 to-purple-500 h-2 rounded-full" style="width: 45%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="modern-card">
+                        <h4 class="text-xl font-semibold text-gray-800 mb-6">التنبيهات والتحذيرات</h4>
+                        <div class="space-y-4">
+                            ${alerts.length > 0 ? alerts.map(alert => `
+                                <div class="border border-${alert.severity === 'high' ? 'red' : 'yellow'}-200 rounded-lg p-4 bg-${alert.severity === 'high' ? 'red' : 'yellow'}-50">
+                                    <div class="flex items-center mb-2">
+                                        <i class="fas fa-exclamation-triangle text-${alert.severity === 'high' ? 'red' : 'yellow'}-600 ml-2"></i>
+                                        <span class="font-medium text-${alert.severity === 'high' ? 'red' : 'yellow'}-800">
+                                            ${alert.severity === 'high' ? 'تحذير عالي' : 'تحذير متوسط'}
+                                        </span>
+                                    </div>
+                                    <p class="text-gray-700 mb-2">${alert.message}</p>
+                                    <p class="text-sm text-gray-600">${alert.recommendation}</p>
+                                </div>
+                            `).join('') : `
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-check-circle text-green-500 text-4xl mb-4"></i>
+                                    <p>جميع المستودعات تعمل بشكل طبيعي</p>
+                                    <p class="text-sm">لا توجد تنبيهات حالياً</p>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modern-card">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-6">حالة الأنظمة</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="text-center p-6 bg-green-50 rounded-lg border border-green-200">
+                            <i class="fas fa-shield-alt text-green-600 text-3xl mb-3"></i>
+                            <h5 class="font-medium text-green-800 mb-2">نظام الأمان</h5>
+                            <p class="text-sm text-green-700">يعمل بشكل طبيعي</p>
+                            <div class="mt-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">آمن</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center p-6 bg-blue-50 rounded-lg border border-blue-200">
+                            <i class="fas fa-thermometer-half text-blue-600 text-3xl mb-3"></i>
+                            <h5 class="font-medium text-blue-800 mb-2">نظام التحكم في درجة الحرارة</h5>
+                            <p class="text-sm text-blue-700">درجة الحرارة: 22°C</p>
+                            <div class="mt-2">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">مستقر</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center p-6 bg-purple-50 rounded-lg border border-purple-200">
+                            <i class="fas fa-wind text-purple-600 text-3xl mb-3"></i>
+                            <h5 class="font-medium text-purple-800 mb-2">نظام التهوية</h5>
+                            <p class="text-sm text-purple-700">الرطوبة: 45%</p>
+                            <div class="mt-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">طبيعي</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeWarehouseStatusModal() {
+            const modal = document.getElementById('warehouseStatusModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Maintenance Request System
+        async function showMaintenanceModal() {
+            try {
+                // Load existing maintenance requests
+                const response = await fetch('http://localhost:3000/api/maintenance', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const requests = await response.json();
+                    displayMaintenanceModal(requests);
+                } else {
+                    showMessage('error', 'خطأ في تحميل طلبات الصيانة');
+                }
+            } catch (error) {
+                console.error('Error loading maintenance requests:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل طلبات الصيانة');
+            }
+        }
+
+        function displayMaintenanceModal(requests) {
+            // Create or update maintenance modal
+            let modal = document.getElementById('maintenanceModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'maintenanceModal';
+                modal.className = 'fixed inset-0 z-50 hidden';
+                modal.innerHTML = `
+                    <div class="flex items-center justify-center min-h-screen p-4">
+                        <div class="absolute inset-0 bg-black opacity-50"></div>
+                        <div class="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                            <div class="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-t-2xl">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-2xl font-bold">نظام طلبات الصيانة</h3>
+                                    <div class="flex items-center space-x-3">
+                                        <button onclick="goBackFromModal('maintenanceModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-arrow-right text-lg"></i>
+                                        </button>
+                                        <button onclick="closeMaintenanceModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h4 class="text-xl font-semibold text-gray-800">طلبات الصيانة</h4>
+                                    <button onclick="showNewMaintenanceRequestModal()" class="btn-modern btn-warning">
+                                        <i class="fas fa-plus ml-2"></i>طلب صيانة جديد
+                                    </button>
+                                </div>
+                                <div id="maintenanceContent">
+                                    <!-- Maintenance content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            // Populate maintenance content
+            const content = document.getElementById('maintenanceContent');
+            content.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="modern-card text-center">
+                        <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-clock text-yellow-600 text-2xl"></i>
+                        </div>
+                        <h5 class="font-medium text-gray-800 mb-2">قيد الانتظار</h5>
+                        <p class="text-3xl font-bold text-yellow-600">${requests.filter(r => r.status === 'pending').length}</p>
+                    </div>
+
+                    <div class="modern-card text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-cog text-blue-600 text-2xl"></i>
+                        </div>
+                        <h5 class="font-medium text-gray-800 mb-2">قيد التنفيذ</h5>
+                        <p class="text-3xl font-bold text-blue-600">${requests.filter(r => r.status === 'in_progress').length}</p>
+                    </div>
+
+                    <div class="modern-card text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-check text-green-600 text-2xl"></i>
+                        </div>
+                        <h5 class="font-medium text-gray-800 mb-2">مكتملة</h5>
+                        <p class="text-3xl font-bold text-green-600">${requests.filter(r => r.status === 'completed').length}</p>
+                    </div>
+                </div>
+
+                <div class="modern-card">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-6">قائمة طلبات الصيانة</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-right py-3 px-4">المستودع</th>
+                                    <th class="text-right py-3 px-4">العنوان</th>
+                                    <th class="text-right py-3 px-4">الأولوية</th>
+                                    <th class="text-right py-3 px-4">الحالة</th>
+                                    <th class="text-right py-3 px-4">تاريخ الطلب</th>
+                                    <th class="text-right py-3 px-4">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="maintenanceTableBody">
+                                ${requests.length > 0 ? requests.map(request => `
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="py-3 px-4">${request.warehouse_name}</td>
+                                        <td class="py-3 px-4">${request.title}</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 rounded-full text-xs ${getPriorityClass(request.priority)}">
+                                                ${getPriorityText(request.priority)}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 rounded-full text-xs ${getStatusClass(request.status)}">
+                                                ${getStatusText(request.status)}
+                                            </span>
+                                        </td>
+                                        <td class="py-3 px-4">${new Date(request.created_at).toLocaleDateString('ar-SA')}</td>
+                                        <td class="py-3 px-4">
+                                            <button onclick="updateMaintenanceStatus('${request.id}', 'in_progress')" class="text-blue-600 hover:text-blue-800 ml-2">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                            <button onclick="updateMaintenanceStatus('${request.id}', 'completed')" class="text-green-600 hover:text-green-800 ml-2">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('') : `
+                                    <tr>
+                                        <td colspan="6" class="text-center py-8 text-gray-500">
+                                            لا توجد طلبات صيانة حالياً
+                                        </td>
+                                    </tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function getPriorityClass(priority) {
+            const classes = {
+                'low': 'bg-gray-100 text-gray-800',
+                'medium': 'bg-blue-100 text-blue-800',
+                'high': 'bg-orange-100 text-orange-800',
+                'urgent': 'bg-red-100 text-red-800'
+            };
+            return classes[priority] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getPriorityText(priority) {
+            const texts = {
+                'low': 'منخفضة',
+                'medium': 'متوسطة',
+                'high': 'عالية',
+                'urgent': 'عاجلة'
+            };
+            return texts[priority] || priority;
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'pending': 'bg-yellow-100 text-yellow-800',
+                'in_progress': 'bg-blue-100 text-blue-800',
+                'completed': 'bg-green-100 text-green-800',
+                'cancelled': 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'pending': 'قيد الانتظار',
+                'in_progress': 'قيد التنفيذ',
+                'completed': 'مكتمل',
+                'cancelled': 'ملغي'
+            };
+            return texts[status] || status;
+        }
+
+        async function updateMaintenanceStatus(requestId, newStatus) {
+            try {
+                const response = await fetch(`http://localhost:3000/api/maintenance/${requestId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        status: newStatus,
+                        notes: `تم تحديث الحالة إلى ${getStatusText(newStatus)}`
+                    })
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'تم تحديث حالة طلب الصيانة بنجاح');
+                    showMaintenanceModal(); // Refresh the modal
+                } else {
+                    showMessage('error', 'خطأ في تحديث حالة طلب الصيانة');
+                }
+            } catch (error) {
+                console.error('Error updating maintenance status:', error);
+                showMessage('error', 'حدث خطأ أثناء تحديث حالة طلب الصيانة');
+            }
+        }
+
+        function closeMaintenanceModal() {
+            const modal = document.getElementById('maintenanceModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function showNewMaintenanceRequestModal() {
+            // Create new maintenance request modal
+            let modal = document.getElementById('newMaintenanceModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'newMaintenanceModal';
+                modal.className = 'fixed inset-0 z-50 hidden';
+                modal.innerHTML = `
+                    <div class="flex items-center justify-center min-h-screen p-4">
+                        <div class="absolute inset-0 bg-black opacity-50"></div>
+                        <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                            <div class="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 rounded-t-2xl">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-2xl font-bold">طلب صيانة جديد</h3>
+                                    <div class="flex items-center space-x-3">
+                                        <button onclick="goBackFromModal('newMaintenanceModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-arrow-right text-lg"></i>
+                                        </button>
+                                        <button onclick="closeNewMaintenanceModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <form id="newMaintenanceForm" onsubmit="submitMaintenanceRequest(event)" class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">المستودع *</label>
+                                        <select id="maintenanceWarehouse" name="warehouse_id" required class="input-modern w-full">
+                                            <option value="">اختر المستودع</option>
+                                            ${allWarehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('')}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">الأولوية *</label>
+                                        <select id="maintenancePriority" name="priority" required class="input-modern w-full">
+                                            <option value="medium">متوسطة</option>
+                                            <option value="high">عالية</option>
+                                            <option value="urgent">عاجلة</option>
+                                            <option value="low">منخفضة</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">عنوان المشكلة *</label>
+                                        <input type="text" id="maintenanceTitle" name="title" required class="input-modern w-full">
+                                    </div>
+
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">وصف المشكلة *</label>
+                                        <textarea id="maintenanceDescription" name="description" rows="4" required class="input-modern w-full" placeholder="وصف تفصيلي للمشكلة..."></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">تاريخ الصيانة المقترح</label>
+                                        <input type="datetime-local" id="maintenanceScheduledDate" name="scheduled_date" class="input-modern w-full">
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">التكلفة التقريبية</label>
+                                        <input type="number" id="maintenanceEstimatedCost" name="estimated_cost" step="0.01" class="input-modern w-full">
+                                    </div>
+
+                                    <div class="md:col-span-2 flex space-x-4">
+                                        <button type="submit" class="btn-modern btn-warning flex-1">
+                                            <i class="fas fa-paper-plane ml-2"></i>إرسال طلب الصيانة
+                                        </button>
+                                        <button type="button" onclick="closeNewMaintenanceModal()" class="btn-modern bg-gray-600 text-white">
+                                            <i class="fas fa-times ml-2"></i>إلغاء
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        async function submitMaintenanceRequest(event) {
+            event.preventDefault();
+
+            const maintenanceData = {
+                warehouse_id: document.getElementById('maintenanceWarehouse').value,
+                title: document.getElementById('maintenanceTitle').value,
+                description: document.getElementById('maintenanceDescription').value,
+                priority: document.getElementById('maintenancePriority').value,
+                scheduled_date: document.getElementById('maintenanceScheduledDate').value || null,
+                estimated_cost: parseFloat(document.getElementById('maintenanceEstimatedCost').value) || null
+            };
+
+            try {
+                const response = await fetch('http://localhost:3000/api/maintenance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(maintenanceData)
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'تم إرسال طلب الصيانة بنجاح');
+                    closeNewMaintenanceModal();
+                    showMaintenanceModal(); // Refresh the maintenance modal
+                } else {
+                    const errorData = await response.json();
+                    showMessage('error', errorData.errors ? errorData.errors.map(e => e.msg).join(', ') : errorData.message || 'خطأ في إرسال طلب الصيانة');
+                }
+            } catch (error) {
+                console.error('Error submitting maintenance request:', error);
+                showMessage('error', 'حدث خطأ أثناء إرسال طلب الصيانة');
+            }
+        }
+
+        function closeNewMaintenanceModal() {
+            const modal = document.getElementById('newMaintenanceModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Inventory Management System
+        async function showInventoryModal() {
+            try {
+                console.log('Loading inventory management...');
+
+                // Load inventory summary
+                const response = await fetch('http://localhost:3000/api/inventory/summary', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const summary = await response.json();
+                    displayInventoryModal(summary);
+                } else {
+                    showMessage('error', 'خطأ في تحميل بيانات الجرد');
+                }
+            } catch (error) {
+                console.error('Error loading inventory:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل بيانات الجرد');
+            }
+        }
+
+        function displayInventoryModal(summary) {
+            // Create or update inventory modal
+            let modal = document.getElementById('inventoryModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'inventoryModal';
+                modal.className = 'fixed inset-0 z-50 hidden';
+                modal.innerHTML = `
+                    <div class="flex items-center justify-center min-h-screen p-4">
+                        <div class="absolute inset-0 bg-black opacity-50"></div>
+                        <div class="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                            <div class="bg-gradient-to-r from-teal-500 to-green-500 text-white p-6 rounded-t-2xl">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-2xl font-bold">نظام جرد المخزون</h3>
+                                    <div class="flex items-center space-x-3">
+                                        <button onclick="goBackFromModal('inventoryModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-arrow-right text-lg"></i>
+                                        </button>
+                                        <button onclick="closeInventoryModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h4 class="text-xl font-semibold text-gray-800">إدارة الجرد</h4>
+                                    <button onclick="showNewInventoryCountModal()" class="btn-modern bg-gradient-to-r from-teal-500 to-green-500 text-white">
+                                        <i class="fas fa-plus ml-2"></i>بدء جرد جديد
+                                    </button>
+                                </div>
+                                <div id="inventoryContent">
+                                    <!-- Inventory content will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            // Populate inventory content
+            const content = document.getElementById('inventoryContent');
+            content.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="modern-card text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-boxes text-blue-600 text-2xl"></i>
+                        </div>
+                        <h5 class="font-medium text-gray-800 mb-2">إجمالي المواد</h5>
+                        <p class="text-3xl font-bold text-blue-600">${summary.summary?.total_materials || 0}</p>
+                    </div>
+
+                    <div class="modern-card text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-weight text-green-600 text-2xl"></i>
+                        </div>
+                        <h5 class="font-medium text-gray-800 mb-2">إجمالي الوزن</h5>
+                        <p class="text-3xl font-bold text-green-600">${summary.summary?.total_weight ? parseFloat(summary.summary.total_weight).toFixed(1) : 0} طن</p>
+                    </div>
+
+                    <div class="modern-card text-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-dollar-sign text-purple-600 text-2xl"></i>
+                        </div>
+                        <h5 class="font-medium text-gray-800 mb-2">القيمة الإجمالية</h5>
+                        <p class="text-3xl font-bold text-purple-600">${summary.summary?.total_value ? parseFloat(summary.summary.total_value).toFixed(0) : 0} ليرة سورية</p>
+                    </div>
+
+                    <div class="modern-card text-center">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-exclamation-triangle text-orange-600 text-2xl"></i>
+                        </div>
+                        <h5 class="font-medium text-gray-800 mb-2">مواد منخفضة المخزون</h5>
+                        <p class="text-3xl font-bold text-orange-600">${summary.summary?.low_stock_items || 0}</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="modern-card">
+                        <h4 class="text-xl font-semibold text-gray-800 mb-6">توزيع المواد حسب النوع</h4>
+                        <div id="inventoryTypeChart" style="height: 300px;"></div>
+                    </div>
+
+                    <div class="modern-card">
+                        <h4 class="text-xl font-semibold text-gray-800 mb-6">توزيع المواد حسب الجودة</h4>
+                        <div id="inventoryQualityChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <div class="modern-card">
+                    <h4 class="text-xl font-semibold text-gray-800 mb-6">تفاصيل المواد حسب النوع</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-right py-3 px-4">النوع</th>
+                                    <th class="text-right py-3 px-4">عدد المواد</th>
+                                    <th class="text-right py-3 px-4">إجمالي الكمية</th>
+                                    <th class="text-right py-3 px-4">القيمة الإجمالية</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${summary.byType?.map(type => `
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="py-3 px-4 font-medium">${getMaterialTypeText(type.type)}</td>
+                                        <td class="py-3 px-4">${type.count}</td>
+                                        <td class="py-3 px-4">${type.total_quantity}</td>
+                                        <td class="py-3 px-4">${type.total_value ? parseFloat(type.total_value).toFixed(0) : 0} ليرة سورية</td>
+                                    </tr>
+                                `).join('') || ''}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // Initialize charts
+            initializeInventoryCharts(summary);
+        }
+
+        function initializeInventoryCharts(summary) {
+            // Type distribution chart
+            const typeData = summary.byType?.map(type => ({
+                x: getMaterialTypeText(type.type),
+                y: type.count,
+                type: 'bar',
+                name: 'عدد المواد'
+            })) || [];
+
+            const typeLayout = {
+                title: '',
+                xaxis: { title: 'نوع المادة' },
+                yaxis: { title: 'العدد' },
+                font: { family: 'Cairo, sans-serif' }
+            };
+
+            if (typeData.length > 0) {
+                Plotly.newPlot('inventoryTypeChart', typeData, typeLayout, {responsive: true});
+            }
+
+            // Quality distribution chart
+            const qualityData = summary.byQuality?.map(quality => ({
+                x: quality.quality,
+                y: quality.count,
+                type: 'bar',
+                name: 'عدد المواد'
+            })) || [];
+
+            const qualityLayout = {
+                title: '',
+                xaxis: { title: 'الجودة' },
+                yaxis: { title: 'العدد' },
+                font: { family: 'Cairo, sans-serif' }
+            };
+
+            if (qualityData.length > 0) {
+                Plotly.newPlot('inventoryQualityChart', qualityData, qualityLayout, {responsive: true});
+            }
+        }
+
+        function closeInventoryModal() {
+            const modal = document.getElementById('inventoryModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        function showNewInventoryCountModal() {
+            // Create new inventory count modal
+            let modal = document.getElementById('newInventoryCountModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'newInventoryCountModal';
+                modal.className = 'fixed inset-0 z-50 hidden';
+                modal.innerHTML = `
+                    <div class="flex items-center justify-center min-h-screen p-4">
+                        <div class="absolute inset-0 bg-black opacity-50"></div>
+                        <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                            <div class="bg-gradient-to-r from-teal-500 to-green-500 text-white p-6 rounded-t-2xl">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-2xl font-bold">بدء جرد مخزون جديد</h3>
+                                    <div class="flex items-center space-x-3">
+                                        <button onclick="goBackFromModal('newInventoryCountModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-arrow-right text-lg"></i>
+                                        </button>
+                                        <button onclick="closeNewInventoryCountModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <form id="newInventoryCountForm" onsubmit="startInventoryCount(event)">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">المستودع *</label>
+                                            <select id="inventoryWarehouse" name="warehouse_id" required class="input-modern w-full">
+                                                <option value="">اختر المستودع</option>
+                                                ${allWarehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('')}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">نوع الجرد</label>
+                                            <select id="inventoryType" class="input-modern w-full">
+                                                <option value="full">جرد كامل</option>
+                                                <option value="partial">جرد جزئي</option>
+                                                <option value="spot">جرد مفاجئ</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-6">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">المواد المراد جردها</label>
+                                        <div id="inventoryMaterialsList" class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-4">
+                                            <!-- Materials will be loaded here -->
+                                        </div>
+                                    </div>
+
+                                    <div class="flex justify-end space-x-4">
+                                        <button type="button" onclick="closeNewInventoryCountModal()" class="btn-modern bg-gray-600 text-white">
+                                            <i class="fas fa-times ml-2"></i>إلغاء
+                                        </button>
+                                        <button type="submit" class="btn-modern bg-gradient-to-r from-teal-500 to-green-500 text-white">
+                                            <i class="fas fa-play ml-2"></i>بدء الجرد
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+
+            // Load materials for the selected warehouse
+            loadMaterialsForInventory();
+
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        async function loadMaterialsForInventory() {
+            try {
+                const warehouseSelect = document.getElementById('inventoryWarehouse');
+                const materialsList = document.getElementById('inventoryMaterialsList');
+
+                if (!warehouseSelect.value) {
+                    materialsList.innerHTML = '<p class="text-gray-500 text-center py-4">اختر المستودع أولاً لرؤية المواد</p>';
+                    return;
+                }
+
+                const response = await fetch(`http://localhost:3000/api/materials/warehouse/${warehouseSelect.value}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const materials = await response.json();
+                    displayMaterialsForInventory(materials);
+                } else {
+                    materialsList.innerHTML = '<p class="text-red-500 text-center py-4">خطأ في تحميل المواد</p>';
+                }
+            } catch (error) {
+                console.error('Error loading materials for inventory:', error);
+                materialsList.innerHTML = '<p class="text-red-500 text-center py-4">خطأ في تحميل المواد</p>';
+            }
+        }
+
+        function displayMaterialsForInventory(materials) {
+            const materialsList = document.getElementById('inventoryMaterialsList');
+
+            if (materials.length === 0) {
+                materialsList.innerHTML = '<p class="text-gray-500 text-center py-4">لا توجد مواد في هذا المستودع</p>';
+                return;
+            }
+
+            materialsList.innerHTML = materials.map(material => `
+                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg mb-2">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="material_${material.id}" class="ml-3" checked>
+                        <div>
+                            <label for="material_${material.id}" class="font-medium text-gray-800 cursor-pointer">${material.name}</label>
+                            <p class="text-sm text-gray-600">الكمية الحالية: ${material.quantity} | النوع: ${getMaterialTypeText(material.type)}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <input type="number" id="count_${material.id}" min="0" value="${material.quantity}" class="w-20 input-modern text-center" placeholder="العدد">
+                    </div>
+                </div>
+            `).join('');
+
+            // Add event listener for warehouse selection
+            document.getElementById('inventoryWarehouse').addEventListener('change', loadMaterialsForInventory);
+        }
+
+        async function startInventoryCount(event) {
+            event.preventDefault();
+
+            const warehouseId = document.getElementById('inventoryWarehouse').value;
+            const checkboxes = document.querySelectorAll('#inventoryMaterialsList input[type="checkbox"]:checked');
+
+            if (checkboxes.length === 0) {
+                showMessage('error', 'يجب اختيار مادة واحدة على الأقل');
+                return;
+            }
+
+            const materials = Array.from(checkboxes).map(cb => {
+                const materialId = cb.id.split('_')[1];
+                return {
+                    material_id: parseInt(materialId),
+                    counted_quantity: parseInt(document.getElementById(`count_${materialId}`).value) || 0
+                };
+            });
+
+            try {
+                const response = await fetch('http://localhost:3000/api/inventory/count-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({
+                        warehouse_id: parseInt(warehouseId),
+                        materials: materials
+                    })
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'تم بدء جلسة الجرد بنجاح');
+                    closeNewInventoryCountModal();
+                    showInventoryModal(); // Refresh the inventory modal
+                } else {
+                    const errorData = await response.json();
+                    showMessage('error', errorData.message || 'خطأ في بدء جلسة الجرد');
+                }
+            } catch (error) {
+                console.error('Error starting inventory count:', error);
+                showMessage('error', 'حدث خطأ أثناء بدء جلسة الجرد');
+            }
+        }
+
+        function closeNewInventoryCountModal() {
+            const modal = document.getElementById('newInventoryCountModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+
+        // Fixed function calls - removed recursive calls
+
+        function showReportModal() {
+            showMessage('info', 'تقرير المستودع - سيتم تطويرها قريباً');
+        }
+
+        function closeWarehouseDetailsModal() {
+            document.getElementById('warehouseDetailsModal').classList.add('hidden');
+            document.getElementById('warehouseDetailsModal').classList.remove('flex');
+        }
+
+        function closeTransferModal() {
+            document.getElementById('transferModal').classList.add('hidden');
+            document.getElementById('transferModal').classList.remove('flex');
+        }
+
+        function editWarehouseFromDetails() {
+            const warehouseId = document.getElementById('warehouseDetailsModal').dataset.warehouseId;
+            closeWarehouseDetailsModal();
+            editWarehouse(parseInt(warehouseId));
+        }
+
+        function showTransferFromDetails() {
+            const warehouseId = document.getElementById('warehouseDetailsModal').dataset.warehouseId;
+            closeWarehouseDetailsModal();
+            showTransferModal();
+            document.getElementById('transferFromWarehouse').value = warehouseId;
+            document.getElementById('transferFromWarehouseName').value = allWarehouses.find(w => w.id == warehouseId)?.name || '';
+        }
+
+        function closeAddWarehouseModal() {
+            document.getElementById('addWarehouseModal').classList.add('hidden');
+            document.getElementById('addWarehouseModal').classList.remove('flex');
+        }
+
+        function executeTransfer(event) {
+            event.preventDefault();
+            showMessage('info', 'تم نقل المواد بنجاح - سيتم تطويرها قريباً');
+            closeTransferModal();
+        }
+
+        function getWarehouseTypeText(type) {
+            const types = {
+                'main': 'رئيسي',
+                'cutting': 'قصاصة',
+                'sorting': 'فرازة',
+                'safekeeping': 'أمانات'
+            };
+            return types[type] || type;
+        }
+
+        function getWarehouseStatusText(status) {
+            const texts = {
+                'active': 'نشط',
+                'inactive': 'غير نشط',
+                'maintenance': 'صيانة',
+                'out_of_service': 'خارج الخدمة'
+            };
+            return texts[status] || status;
+        }
+
+        function getMaterialTypeText(type) {
+            const types = {
+                'ورق': 'ورق',
+                'كرتون': 'كرتون',
+                'بلاستيك': 'بلاستيك',
+                'معدن': 'معدن'
+            };
+            return types[type] || type || 'غير محدد';
+        }
+
+        // Go back from modal function
+        function goBackFromModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+    </script>
+</body>
+</html>

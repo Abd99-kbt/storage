@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - نظام إدارة المستودعات</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+        
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 280px;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(280px);
+        }
+        
+        .main-content {
+            margin-right: 280px;
+            transition: margin-right 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-right: 0;
+        }
+        
+        .nav-item {
+            padding: 12px 20px;
+            margin: 4px 0;
+            border-radius: 0 25px 25px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-5px);
+        }
+        
+        .nav-item i {
+            width: 20px;
+            margin-left: 10px;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 1px solid #f1f5f9;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 24px;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .success-message {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(280px);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="p-6">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-warehouse text-white text-2xl"></i>
+                </div>
+                <h2 class="text-white text-xl font-bold">نظام المستودعات</h2>
+                <p class="text-white text-opacity-80 text-sm" id="userName">مدير النظام</p>
+            </div>
+            
+            <nav class="space-y-2">
+                <div class="nav-item active text-white" onclick="showSection('dashboard')">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>لوحة التحكم</span>
+                </div>
+                <div class="nav-item text-white" onclick="showSection('warehouses')">
+                    <i class="fas fa-warehouse"></i>
+                    <span>إدارة المستودعات</span>
+                </div>
+                <div class="nav-item text-white" onclick="showSection('materials')">
+                    <i class="fas fa-boxes"></i>
+                    <span>كرت المادة</span>
+                </div>
+                <div class="nav-item text-white" onclick="showSection('orders')">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>الطلبات</span>
+                    <span class="notification-badge" id="orderBadge">3</span>
+                </div>
+                <div class="nav-item text-white" onclick="showSection('invoices')">
+                    <i class="fas fa-file-invoice"></i>
+                    <span>الفوترة</span>
+                </div>
+                <div class="nav-item text-white" onclick="showSection('reports')">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>التقارير</span>
+                </div>
+                <div class="nav-item text-white" onclick="showSection('users')">
+                    <i class="fas fa-users"></i>
+                    <span>المستخدمين</span>
+                </div>
+                <div class="nav-item text-white" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>تسجيل الخروج</span>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm border-b">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <button class="md:hidden text-gray-600 ml-4" onclick="toggleSidebar()">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <button onclick="goBack()" class="text-gray-600 hover:text-gray-800 ml-3 transition-all duration-200" id="backButton" style="display: none;">
+                            <i class="fas fa-arrow-right text-lg"></i>
+                        </button>
+                        <h1 class="text-2xl font-bold text-gray-800" id="pageTitle">لوحة التحكم</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="showNotifications()" class="relative p-2 text-gray-600 hover:text-gray-800 transition-all duration-200 hover:scale-110">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="notification-badge">5</span>
+                        </button>
+                        <div class="flex items-center space-x-2">
+                            <img src="https://via.placeholder.com/40x40/667eea/ffffff?text=U" class="rounded-full w-10 h-10 border-2 border-gray-200 hover:border-purple-300 transition-all duration-200">
+                            <span class="text-gray-700" id="userDisplayName">مدير النظام</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Container -->
+        <div id="messagesContainer" class="p-6"></div>
+
+        <!-- Dashboard Section -->
+        <div id="dashboardSection" class="p-6">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stats-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">إجمالي المواد</p>
+                            <p class="text-3xl font-bold text-gray-800" id="totalMaterials">0</p>
+                            <p class="text-green-600 text-sm mt-1">
+                                <i class="fas fa-arrow-up ml-1"></i><span id="materialsChange">+12%</span> من الشهر الماضي
+                            </p>
+                        </div>
+                        <div class="stats-icon bg-gradient-to-r from-blue-500 to-blue-600">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">الطلبات النشطة</p>
+                            <p class="text-3xl font-bold text-gray-800" id="activeOrders">0</p>
+                            <p class="text-orange-600 text-sm mt-1">
+                                <i class="fas fa-clock ml-1"></i>قيد المعالجة
+                            </p>
+                        </div>
+                        <div class="stats-icon bg-gradient-to-r from-orange-500 to-orange-600">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">المستودعات</p>
+                            <p class="text-3xl font-bold text-gray-800" id="totalWarehouses">0</p>
+                            <p class="text-blue-600 text-sm mt-1">
+                                <i class="fas fa-warehouse ml-1"></i>نشطة
+                            </p>
+                        </div>
+                        <div class="stats-icon bg-gradient-to-r from-green-500 to-green-600">
+                            <i class="fas fa-warehouse"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">الإيرادات</p>
+                            <p class="text-3xl font-bold text-gray-800" id="totalRevenue">0</p>
+                            <p class="text-green-600 text-sm mt-1">
+                                <i class="fas fa-arrow-up ml-1"></i><span id="revenueChange">+8%</span> هذا الشهر
+                            </p>
+                        </div>
+                        <div class="stats-icon bg-gradient-to-r from-purple-500 to-purple-600">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="chart-container">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">حركة المواد خلال الشهر</h3>
+                    <div id="materialMovementChart" style="height: 300px;"></div>
+                </div>
+                
+                <div class="chart-container">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">حالة الطلبات</h3>
+                    <div id="ordersStatusChart" style="height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="chart-container mt-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">آخر النشاطات</h3>
+                <div id="recentActivities" class="space-y-4">
+                    <div class="text-center py-8">
+                        <div class="loading mx-auto mb-4"></div>
+                        <p class="text-gray-600">جاري تحميل البيانات...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warehouses Section -->
+        <div id="warehousesSection" class="p-6 hidden">
+            <div class="mb-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">إدارة المستودعات</h2>
+                    <button onclick="showAddWarehouseModal()" class="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all">
+                        <i class="fas fa-plus ml-2"></i>إضافة مستودع جديد
+                    </button>
+                </div>
+            </div>
+
+            <!-- Warehouse Types -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stats-card cursor-pointer" onclick="filterWarehouses('main')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">المستودعات الرئيسية</p>
+                            <p class="text-3xl font-bold text-gray-800" id="mainWarehouses">0</p>
+                            <p class="text-blue-600 text-sm mt-1">مستودع رئيسي 1، مستودع رئيسي 2</p>
+                        </div>
+                        <div class="stats-icon bg-gradient-to-r from-blue-500 to-blue-600">
+                            <i class="fas fa-warehouse"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterWarehouses('cutting')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">مستودعات القصاصة</p>
+                            <p class="text-3xl font-bold text-gray-800" id="cuttingWarehouses">0</p>
+                            <p class="text-green-600 text-sm mt-1">مستودع قصاصة 1، مستودع قصاصة 2</p>
+                        </div>
+                        <div class="stats-icon bg-gradient-to-r from-green-500 to-green-600">
+                            <i class="fas fa-cut"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterWarehouses('sorting')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">مستودعات الفرازة</p>
+                            <p class="text-3xl font-bold text-gray-800" id="sortingWarehouses">0</p>
+                            <p class="text-purple-600 text-sm mt-1">مستودع فرازة 1، مستودع فرازة 2</p>
+                        </div>
+                        <div class="stats-icon bg-gradient-to-r from-purple-500 to-purple-600">
+                            <i class="fas fa-sort"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterWarehouses('safekeeping')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">مستودعات الأمانات</p>
+                            <p class="text-3xl font-bold text-gray-800" id="safekeepingWarehouses">0</p>
+                            <p class="text-orange-600 text-sm mt-1">أمانات مفوترة، أمانات فرز</p>
+                        </div>
+                        <div class="stats-icon bg-gradient-to-r from-orange-500 to-orange-600">
+                            <i class="fas fa-safe"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warehouse List -->
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">قائمة المستودعات</h3>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">اسم المستودع</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">النوع</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">السعة (طن)</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">المستخدم</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الحالة</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="warehouseTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-8">
+                                        <div class="loading mx-auto mb-4"></div>
+                                        <p class="text-gray-600">جاري تحميل البيانات...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Materials Section -->
+        <div id="materialsSection" class="p-6 hidden">
+            <div class="mb-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">كرت المادة</h2>
+                    <button onclick="showAddMaterialModal()" class="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all">
+                        <i class="fas fa-plus ml-2"></i>إضافة مادة جديدة
+                    </button>
+                </div>
+            </div>
+
+            <!-- Material Form -->
+            <div class="bg-white rounded-lg shadow-sm mb-6">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">بيانات المادة</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">اسم المادة</label>
+                            <input type="text" id="materialName" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="أدخل اسم المادة">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">الوزن (كغ)</label>
+                            <input type="number" id="materialWeight" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="الوزن بالكيلوغرام">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">الكمية</label>
+                            <input type="number" id="materialQuantity" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="الكمية">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">الطول (سم)</label>
+                            <input type="number" id="materialLength" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="الطول بالسنتيمتر">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">العرض (سم)</label>
+                            <input type="number" id="materialWidth" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="العرض بالسنتيمتر">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">النوع</label>
+                            <select id="materialType" class="w-full p-2 border border-gray-300 rounded-lg">
+                                <option value="">اختر النوع</option>
+                                <option value="ورق">ورق</option>
+                                <option value="كرتون">كرتون</option>
+                                <option value="بلاستيك">بلاستيك</option>
+                                <option value="معدن">معدن</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">الغراماج</label>
+                            <input type="number" id="materialGrammage" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="الغراماج">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">رقم الفاتورة</label>
+                            <input type="text" id="invoiceNumber" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="رقم الفاتورة">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">الجودة</label>
+                            <select id="materialQuality" class="w-full p-2 border border-gray-300 rounded-lg">
+                                <option value="">اختر الجودة</option>
+                                <option value="ممتاز">ممتاز</option>
+                                <option value="جيد">جيد</option>
+                                <option value="متوسط">متوسط</option>
+                                <option value="رديء">رديء</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">رقم الرول</label>
+                            <input type="text" id="rollNumber" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="رقم الرول">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">المستودع</label>
+                            <select id="warehouseLocation" class="w-full p-2 border border-gray-300 rounded-lg">
+                                <option value="">اختر المستودع</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">المصدر</label>
+                            <input type="text" id="materialSource" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="اسم المورد">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">كلفة المادة</label>
+                        <input type="number" id="materialCost" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="الكلفة بالليرة سورية">
+                    </div>
+                    <div class="mt-6 flex space-x-4">
+                        <button onclick="saveMaterial()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-save ml-2"></i>حفظ المادة
+                        </button>
+                        <button onclick="clearMaterialForm()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700">
+                            <i class="fas fa-eraser ml-2"></i>مسح الحقول
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Materials List -->
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">قائمة المواد</h3>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">اسم المادة</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الوزن (كغ)</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الكمية</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الأبعاد (سم)</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">النوع</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الجودة</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">المستودع</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialTableBody">
+                                <tr>
+                                    <td colspan="8" class="text-center py-8">
+                                        <div class="loading mx-auto mb-4"></div>
+                                        <p class="text-gray-600">جاري تحميل البيانات...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="ordersSection" class="p-6 hidden">
+            <div class="mb-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">إدارة الطلبات</h2>
+                    <button onclick="showAddOrderModal()" class="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all">
+                        <i class="fas fa-plus ml-2"></i>إنشاء طلب جديد
+                    </button>
+                </div>
+            </div>
+
+            <!-- Order Stages -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+                <div class="stats-card cursor-pointer" onclick="filterOrders('pending')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-clock text-yellow-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm">قيد الانتظار</p>
+                        <p class="text-2xl font-bold text-gray-800" id="pendingOrders">0</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterOrders('processing')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-cog text-blue-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm">قيد المعالجة</p>
+                        <p class="text-2xl font-bold text-gray-800" id="processingOrders">0</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterOrders('sorting')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-sort text-purple-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm">مرحلة الفرز</p>
+                        <p class="text-2xl font-bold text-gray-800" id="sortingOrders">0</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterOrders('cutting')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-cut text-green-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm">مرحلة القص</p>
+                        <p class="text-2xl font-bold text-gray-800" id="cuttingOrders">0</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterOrders('completed')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-check text-green-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm">مكتمل</p>
+                        <p class="text-2xl font-bold text-gray-800" id="completedOrders">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Processing Options -->
+            <div class="bg-white rounded-lg shadow-sm mb-6">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">خيارات معالجة الطلبات</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="p-4 border border-gray-200 rounded-lg text-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-shipping-fast text-blue-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-2">تسليم مباشر</h4>
+                            <p class="text-sm text-gray-600">التسليم للزبون مباشرة من المستودع</p>
+                        </div>
+                        
+                        <div class="p-4 border border-gray-200 rounded-lg text-center">
+                            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-sort text-purple-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-2">فرز ثم تسليم</h4>
+                            <p class="text-sm text-gray-600">مرحلة الفرز ثم التسليم للزبون</p>
+                        </div>
+                        
+                        <div class="p-4 border border-gray-200 rounded-lg text-center">
+                            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-cut text-green-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-2">قص ثم تسليم</h4>
+                            <p class="text-sm text-gray-600">مرحلة القص ثم التسليم</p>
+                        </div>
+                        
+                        <div class="p-4 border border-gray-200 rounded-lg text-center">
+                            <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-tasks text-orange-600"></i>
+                            </div>
+                            <h4 class="font-medium text-gray-800 mb-2">فرز وقص ثم تسليم</h4>
+                            <p class="text-sm text-gray-600">مرحلة الفرز ثم القص ثم التسليم</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders List -->
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">قائمة الطلبات</h3>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">رقم الطلب</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">اسم الزبون</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">عدد الأطباق</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">المرحلة الحالية</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">تاريخ الإنشاء</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-8">
+                                        <div class="loading mx-auto mb-4"></div>
+                                        <p class="text-gray-600">جاري تحميل البيانات...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Invoices Section -->
+        <div id="invoicesSection" class="p-6 hidden">
+            <div class="mb-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">الفوترة والتسليم</h2>
+                    <button onclick="createInvoice()" class="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all">
+                        <i class="fas fa-plus ml-2"></i>إنشاء فاتورة جديدة
+                    </button>
+                </div>
+            </div>
+
+            <!-- Invoice Status -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stats-card cursor-pointer" onclick="filterInvoices('draft')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-file text-gray-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm">مسودة</p>
+                        <p class="text-2xl font-bold text-gray-800" id="draftInvoices">0</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterInvoices('approved')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-check text-blue-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm">معتمدة</p>
+                        <p class="text-2xl font-bold text-gray-800" id="approvedInvoices">0</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterInvoices('paid')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-dollar-sign text-green-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm">مدفوعة</p>
+                        <p class="text-2xl font-bold text-gray-800" id="paidInvoices">0</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="filterInvoices('delivered')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-truck text-purple-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-sm">مسلمة</p>
+                        <p class="text-2xl font-bold text-gray-800" id="deliveredInvoices">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Elements -->
+            <div class="bg-white rounded-lg shadow-sm mb-6">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">عناصر الفاتورة</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-3">بيانات المادة</h4>
+                            <ul class="space-y-2 text-sm text-gray-600">
+                                <li><i class="fas fa-box ml-2"></i>اسم المادة والمواصفات</li>
+                                <li><i class="fas fa-weight ml-2"></i>الوزن والكمية</li>
+                                <li><i class="fas fa-ruler ml-2"></i>الأبعاد والغراماج</li>
+                                <li><i class="fas fa-star ml-2"></i>جودة المادة</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-700 mb-3">المعلومات المالية</h4>
+                            <ul class="space-y-2 text-sm text-gray-600">
+                                <li><i class="fas fa-calculator ml-2"></i>الكمية × السعر</li>
+                                <li><i class="fas fa-cut ml-2"></i>أجور القص</li>
+                                <li><i class="fas fa-percentage ml-2"></i>الحسم أو الإضافات</li>
+                                <li><i class="fas fa-sum ml-2"></i>القيمة الإجمالية</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices List -->
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">قائمة الفواتير</h3>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">رقم الفاتورة</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">اسم الزبون</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">عدد الأطباق</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">القيمة الإجمالية</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الحالة</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">تاريخ الفاتورة</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoiceTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center py-8">
+                                        <div class="loading mx-auto mb-4"></div>
+                                        <p class="text-gray-600">جاري تحميل البيانات...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reportsSection" class="p-6 hidden">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">التقارير والإحصائيات</h2>
+            </div>
+
+            <!-- Report Types -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="stats-card cursor-pointer" onclick="generateReport('orders')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-shopping-cart text-blue-600"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-800 mb-1">تقارير الطلبات</h4>
+                        <p class="text-sm text-gray-600">تقارير شاملة حسب عناصر الطلبات</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="generateReport('waste')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-trash text-red-600"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-800 mb-1">تقارير الهدر</h4>
+                        <p class="text-sm text-gray-600">إحصائيات الهدر حسب الطلبية والفترة</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="generateReport('warehouses')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-warehouse text-green-600"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-800 mb-1">تقارير المستودعات</h4>
+                        <p class="text-sm text-gray-600">بيانات تفصيلية مصنفة حسب عناصر المادة</p>
+                    </div>
+                </div>
+                
+                <div class="stats-card cursor-pointer" onclick="generateReport('financial')">
+                    <div class="text-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <i class="fas fa-chart-line text-purple-600"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-800 mb-1">تقارير مالية</h4>
+                        <p class="text-sm text-gray-600">تحليل الأداء المالي والإيرادات</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Filters -->
+            <div class="bg-white rounded-lg shadow-sm mb-6">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">فلاتر التقارير</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">نوع التقرير</label>
+                            <select id="reportType" class="w-full p-2 border border-gray-300 rounded-lg">
+                                <option value="">اختر النوع</option>
+                                <option value="daily">يومي</option>
+                                <option value="weekly">أسبوعي</option>
+                                <option value="monthly">شهري</option>
+                                <option value="yearly">سنوي</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">من تاريخ</label>
+                            <input type="date" id="dateFrom" class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">إلى تاريخ</label>
+                            <input type="date" id="dateTo" class="w-full p-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div class="flex items-end">
+                            <button onclick="applyFilters()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                                <i class="fas fa-filter ml-2"></i>تطبيق الفلاتر
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample Report -->
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">تقرير حركة المواد - سبتمبر 2025</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-4">ملخص الحركة</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">إجمالي المواد المدخلة:</span>
+                                    <span class="font-medium">1,250 طن</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">إجمالي المواد المخرجة:</span>
+                                    <span class="font-medium">980 طن</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">الهدر:</span>
+                                    <span class="font-medium text-red-600">45 طن (3.6%)</span>
+                                </div>
+                                <div class="flex justify-between border-t pt-3">
+                                    <span class="text-gray-800 font-medium">المخزون الحالي:</span>
+                                    <span class="font-bold text-green-600">270 طن</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-4">التوزيع حسب النوع</h4>
+                            <div class="space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">ورق:</span>
+                                    <span class="font-medium">45%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">كرتون:</span>
+                                    <span class="font-medium">30%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">بلاستيك:</span>
+                                    <span class="font-medium">15%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">معدن:</span>
+                                    <span class="font-medium">10%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex space-x-4">
+                        <button onclick="exportReport('pdf')" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700">
+                            <i class="fas fa-file-pdf ml-2"></i>تصدير PDF
+                        </button>
+                        <button onclick="exportReport('excel')" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                            <i class="fas fa-file-excel ml-2"></i>تصدير Excel
+                        </button>
+                        <button onclick="printReport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-print ml-2"></i>طباعة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Section -->
+        <div id="usersSection" class="p-6 hidden">
+            <div class="mb-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">المستخدمين</h2>
+                    <button onclick="showAddUserModal()" class="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all">
+                        <i class="fas fa-plus ml-2"></i>إضافة مستخدم جديد
+                    </button>
+                </div>
+            </div>
+
+            <!-- Users List -->
+            <div class="bg-white rounded-lg shadow-sm">
+                <div class="p-6 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">قائمة المستخدمين</h3>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">اسم المستخدم</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الاسم الكامل</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">نوع المستخدم</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">البريد الإلكتروني</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الحالة</th>
+                                    <th class="text-right py-3 px-4 font-medium text-gray-700">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center py-8">
+                                        <div class="loading mx-auto mb-4"></div>
+                                        <p class="text-gray-600">جاري تحميل البيانات...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = window.location.origin + '/api';
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+        // Navigation history for back button functionality
+        let navigationHistory = ['dashboard'];
+        let currentSection = 'dashboard';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            if (!authToken || !currentUser) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load user data
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userDisplayName').textContent = currentUser.name;
+
+            // Load dashboard data
+            loadDashboardData();
+
+            // Initialize navigation
+            initializeNavigation();
+        });
+
+        // Initialize navigation system
+        function initializeNavigation() {
+            // Update back button visibility
+            updateBackButtonVisibility();
+
+            // Add keyboard navigation support
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    goBack();
+                }
+            });
+        }
+
+        // Enhanced showSection function with navigation history
+        const originalShowSection = showSection;
+        function showSection(sectionName) {
+            // Add fade out effect to current section
+            const currentSectionElement = document.getElementById(currentSection + 'Section');
+            if (currentSectionElement) {
+                currentSectionElement.style.opacity = '0';
+                currentSectionElement.style.transform = 'translateX(20px)';
+
+                setTimeout(() => {
+                    currentSectionElement.classList.add('hidden');
+                    currentSectionElement.style.opacity = '1';
+                    currentSectionElement.style.transform = 'translateX(0)';
+                }, 300);
+            }
+
+            // Update navigation history
+            if (currentSection !== sectionName && sectionName !== 'dashboard') {
+                navigationHistory.push(currentSection);
+                updateBackButtonVisibility();
+            }
+
+            currentSection = sectionName;
+            originalShowSection(sectionName);
+
+            // Add fade in effect to new section
+            const newSectionElement = document.getElementById(sectionName + 'Section');
+            if (newSectionElement) {
+                newSectionElement.classList.remove('hidden');
+                setTimeout(() => {
+                    newSectionElement.style.opacity = '1';
+                    newSectionElement.style.transform = 'translateX(0)';
+                }, 50);
+            }
+        }
+
+        // Go back function
+        function goBack() {
+            if (navigationHistory.length > 1) {
+                const previousSection = navigationHistory.pop();
+                showSection(previousSection);
+                updateBackButtonVisibility();
+            } else {
+                // If no history, go to dashboard
+                showSection('dashboard');
+            }
+        }
+
+        // Update back button visibility
+        function updateBackButtonVisibility() {
+            const backButton = document.getElementById('backButton');
+            if (backButton) {
+                backButton.style.display = navigationHistory.length > 1 ? 'inline-block' : 'none';
+            }
+        }
+
+        // Show notifications function
+        function showNotifications() {
+            alert('عرض التنبيهات - سيتم تنفيذه قريباً');
+        }
+
+        // API Helper Functions
+        async function apiRequest(endpoint, options = {}) {
+            const config = {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            };
+
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+                const data = await response.json();
+
+                if (response.status === 401) {
+                    // Token expired or invalid
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('currentUser');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                return { success: response.ok, data };
+            } catch (error) {
+                console.error('API request error:', error);
+                return { success: false, data: { message: 'خطأ في الاتصال بالخادم' } };
+            }
+        }
+
+        // Load Dashboard Data
+        async function loadDashboardData() {
+            const result = await apiRequest('/reports/dashboard');
+            
+            if (result.success) {
+                const data = result.data;
+                
+                // Update stats
+                document.getElementById('totalMaterials').textContent = data.materials?.total_materials || 0;
+                document.getElementById('activeOrders').textContent = data.orders?.processing_orders || 0;
+                document.getElementById('totalWarehouses').textContent = data.warehouses?.total_warehouses || 0;
+                document.getElementById('totalRevenue').textContent = data.orders?.total_revenue || 0;
+                
+                // Initialize charts
+                initializeCharts(data);
+                
+                // Load recent activities
+                loadRecentActivities(data.recentActivities);
+            } else {
+                showMessage('error', result.data.message || 'خطأ في تحميل بيانات لوحة التحكم');
+            }
+        }
+
+        // Initialize Charts
+        function initializeCharts(data) {
+            // Material Movement Chart
+            const materialData = {
+                x: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+                y: data.charts?.materialMovement?.map(item => item.total_weight) || [120, 150, 180, 140, 200, 170],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'الكمية (طن)',
+                line: { color: '#667eea', width: 3 },
+                marker: { color: '#667eea', size: 8 }
+            };
+
+            const materialLayout = {
+                title: '',
+                xaxis: { title: 'الشهر' },
+                yaxis: { title: 'الكمية (طن)' },
+                font: { family: 'Cairo, sans-serif' },
+                margin: { t: 20, r: 20, b: 50, l: 50 }
+            };
+
+            Plotly.newPlot('materialMovementChart', [materialData], materialLayout, {responsive: true});
+
+            // Orders Status Chart
+            const ordersData = data.charts?.ordersStatus || [
+                { status: 'قيد الانتظار', count: 35 },
+                { status: 'قيد المعالجة', count: 25 },
+                { status: 'تم الفرز', count: 20 },
+                { status: 'تم القص', count: 15 },
+                { status: 'مكتمل', count: 5 }
+            ];
+
+            const ordersChartData = [{
+                values: ordersData.map(item => item.count),
+                labels: ordersData.map(item => item.status),
+                type: 'pie',
+                marker: {
+                    colors: ['#f59e0b', '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981']
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside'
+            }];
+
+            const ordersLayout = {
+                title: '',
+                font: { family: 'Cairo, sans-serif' },
+                margin: { t: 20, r: 20, b: 20, l: 20 },
+                showlegend: false
+            };
+
+            Plotly.newPlot('ordersStatusChart', ordersChartData, ordersLayout, {responsive: true});
+        }
+
+        // Load Recent Activities
+        function loadRecentActivities(activities) {
+            const container = document.getElementById('recentActivities');
+            
+            if (!activities || activities.length === 0) {
+                container.innerHTML = '<p class="text-gray-600 text-center">لا توجد نشاطات حديثة</p>';
+                return;
+            }
+
+            const activitiesHTML = activities.map(activity => `
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                    <div class="w-10 h-10 bg-${activity.type === 'order' ? 'blue' : 'green'}-100 rounded-full flex items-center justify-center ml-4">
+                        <i class="fas fa-${activity.type === 'order' ? 'shopping-cart' : 'box'} text-${activity.type === 'order' ? 'blue' : 'green'}-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-800">${activity.description}</p>
+                        <p class="text-sm text-gray-600">${new Date(activity.created_at).toLocaleDateString('ar-SA')}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = activitiesHTML;
+        }
+
+        // Show Section
+        function showSection(sectionName) {
+            // Hide all sections
+            const sections = ['dashboard', 'warehouses', 'materials', 'orders', 'invoices', 'reports', 'users'];
+            sections.forEach(section => {
+                document.getElementById(section + 'Section').classList.add('hidden');
+                document.querySelector(`[onclick="showSection('${section}')"]`).classList.remove('active');
+            });
+
+            // Show selected section
+            document.getElementById(sectionName + 'Section').classList.remove('hidden');
+            document.querySelector(`[onclick="showSection('${sectionName}')"]`).classList.add('active');
+
+            // Update page title
+            const titles = {
+                dashboard: 'لوحة التحكم',
+                warehouses: 'إدارة المستودعات',
+                materials: 'كرت المادة',
+                orders: 'الطلبات',
+                invoices: 'الفوترة',
+                reports: 'التقارير',
+                users: 'المستخدمين'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionName];
+
+            // Load section data
+            loadSectionData(sectionName);
+        }
+
+        // Load Section Data
+        async function loadSectionData(sectionName) {
+            switch(sectionName) {
+                case 'warehouses':
+                    await loadWarehousesData();
+                    break;
+                case 'materials':
+                    await loadMaterialsData();
+                    break;
+                case 'orders':
+                    await loadOrdersData();
+                    break;
+                case 'invoices':
+                    await loadInvoicesData();
+                    break;
+                case 'users':
+                    await loadUsersData();
+                    break;
+            }
+        }
+
+        // Load Warehouses Data
+        async function loadWarehousesData() {
+            const result = await apiRequest('/warehouses');
+            
+            if (result.success) {
+                const warehouses = result.data;
+                const tbody = document.getElementById('warehouseTableBody');
+                
+                // Update warehouse counts
+                const counts = warehouses.reduce((acc, w) => {
+                    acc[w.type] = (acc[w.type] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                document.getElementById('mainWarehouses').textContent = counts.main || 0;
+                document.getElementById('cuttingWarehouses').textContent = counts.cutting || 0;
+                document.getElementById('sortingWarehouses').textContent = counts.sorting || 0;
+                document.getElementById('safekeepingWarehouses').textContent = counts.safekeeping || 0;
+                
+                // Update warehouse table
+                tbody.innerHTML = warehouses.map(warehouse => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-3 px-4">${warehouse.name}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">${warehouse.type}</span></td>
+                        <td class="py-3 px-4">${warehouse.capacity}</td>
+                        <td class="py-3 px-4">${warehouse.manager_name || 'غير محدد'}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">${warehouse.is_active ? 'نشط' : 'غير نشط'}</span></td>
+                        <td class="py-3 px-4">
+                            <button onclick="editWarehouse(${warehouse.id})" class="text-blue-600 hover:text-blue-800 ml-2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="viewWarehouse(${warehouse.id})" class="text-green-600 hover:text-green-800 ml-2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="transferMaterials(${warehouse.id})" class="text-orange-600 hover:text-orange-800">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                showMessage('error', result.data.message || 'خطأ في تحميل بيانات المستودعات');
+            }
+        }
+
+        // Load Materials Data
+        async function loadMaterialsData() {
+            // Load warehouses for dropdown
+            const warehousesResult = await apiRequest('/warehouses');
+            if (warehousesResult.success) {
+                const warehouseSelect = document.getElementById('warehouseLocation');
+                warehouseSelect.innerHTML = '<option value="">اختر المستودع</option>' +
+                    warehousesResult.data.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+            }
+
+            // Load materials
+            const materialsResult = await apiRequest('/materials');
+            if (materialsResult.success) {
+                const materials = materialsResult.data;
+                const tbody = document.getElementById('materialTableBody');
+                
+                tbody.innerHTML = materials.map(material => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-3 px-4">${material.name}</td>
+                        <td class="py-3 px-4">${material.weight}</td>
+                        <td class="py-3 px-4">${material.quantity}</td>
+                        <td class="py-3 px-4">${material.length} × ${material.width}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">${material.type}</span></td>
+                        <td class="py-3 px-4"><span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">${material.quality}</span></td>
+                        <td class="py-3 px-4">${material.warehouse_name}</td>
+                        <td class="py-3 px-4">
+                            <button onclick="editMaterial(${material.id})" class="text-blue-600 hover:text-blue-800 ml-2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="viewMaterial(${material.id})" class="text-green-600 hover:text-green-800 ml-2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="deleteMaterial(${material.id})" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                showMessage('error', materialsResult.data.message || 'خطأ في تحميل بيانات المواد');
+            }
+        }
+
+        // Load Orders Data
+        async function loadOrdersData() {
+            const result = await apiRequest('/orders');
+            
+            if (result.success) {
+                const orders = result.data;
+                const tbody = document.getElementById('ordersTableBody');
+                
+                // Update order counts
+                const counts = orders.reduce((acc, order) => {
+                    acc[order.status] = (acc[order.status] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                document.getElementById('pendingOrders').textContent = counts.pending || 0;
+                document.getElementById('processingOrders').textContent = counts.processing || 0;
+                document.getElementById('sortingOrders').textContent = counts.sorting || 0;
+                document.getElementById('cuttingOrders').textContent = counts.cutting || 0;
+                document.getElementById('completedOrders').textContent = counts.completed || 0;
+                
+                // Update orders table
+                tbody.innerHTML = orders.map(order => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-3 px-4 font-medium">${order.order_number}</td>
+                        <td class="py-3 px-4">${order.customer_name}</td>
+                        <td class="py-3 px-4">${order.plate_count}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 bg-${getStatusColor(order.status)}-100 text-${getStatusColor(order.status)}-800 rounded-full text-sm">${getStatusText(order.status)}</span>
+                        </td>
+                        <td class="py-3 px-4">${new Date(order.created_at).toLocaleDateString('ar-SA')}</td>
+                        <td class="py-3 px-4">
+                            <button onclick="viewOrder(${order.id})" class="text-blue-600 hover:text-blue-800 ml-2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="approveOrder(${order.id})" class="text-green-600 hover:text-green-800 ml-2">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button onclick="moveToNextStage(${order.id})" class="text-orange-600 hover:text-orange-800">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                showMessage('error', result.data.message || 'خطأ في تحميل بيانات الطلبات');
+            }
+        }
+
+        // Load Invoices Data
+        async function loadInvoicesData() {
+            const result = await apiRequest('/invoices');
+            
+            if (result.success) {
+                const invoices = result.data;
+                const tbody = document.getElementById('invoiceTableBody');
+                
+                // Update invoice counts
+                const counts = invoices.reduce((acc, invoice) => {
+                    acc[invoice.status] = (acc[invoice.status] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                document.getElementById('draftInvoices').textContent = counts.draft || 0;
+                document.getElementById('approvedInvoices').textContent = counts.approved || 0;
+                document.getElementById('paidInvoices').textContent = counts.paid || 0;
+                document.getElementById('deliveredInvoices').textContent = counts.delivered || 0;
+                
+                // Update invoices table
+                tbody.innerHTML = invoices.map(invoice => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-3 px-4 font-medium">${invoice.invoice_number}</td>
+                        <td class="py-3 px-4">${invoice.customer_name}</td>
+                        <td class="py-3 px-4">${invoice.plate_count || 0}</td>
+                        <td class="py-3 px-4 font-bold">${invoice.total_amount} ليرة سورية</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 bg-${getInvoiceStatusColor(invoice.status)}-100 text-${getInvoiceStatusColor(invoice.status)}-800 rounded-full text-sm">${getInvoiceStatusText(invoice.status)}</span>
+                        </td>
+                        <td class="py-3 px-4">${new Date(invoice.created_at).toLocaleDateString('ar-SA')}</td>
+                        <td class="py-3 px-4">
+                            <button onclick="viewInvoice('${invoice.invoice_number}')" class="text-blue-600 hover:text-blue-800 ml-2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="printInvoice('${invoice.invoice_number}')" class="text-green-600 hover:text-green-800 ml-2">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            <button onclick="approveDelivery('${invoice.invoice_number}')" class="text-orange-600 hover:text-orange-800">
+                                <i class="fas fa-truck"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                showMessage('error', result.data.message || 'خطأ في تحميل بيانات الفواتير');
+            }
+        }
+
+        // Load Users Data
+        async function loadUsersData() {
+            const result = await apiRequest('/users');
+            
+            if (result.success) {
+                const users = result.data;
+                const tbody = document.getElementById('usersTableBody');
+                
+                tbody.innerHTML = users.map(user => `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="py-3 px-4">${user.username}</td>
+                        <td class="py-3 px-4">${user.name}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">${getUserTypeText(user.user_type)}</span></td>
+                        <td class="py-3 px-4">${user.email || 'غير محدد'}</td>
+                        <td class="py-3 px-4"><span class="px-2 py-1 bg-${user.is_active ? 'green' : 'red'}-100 text-${user.is_active ? 'green' : 'red'}-800 rounded-full text-sm">${user.is_active ? 'نشط' : 'غير نشط'}</span></td>
+                        <td class="py-3 px-4">
+                            <button onclick="editUser(${user.id})" class="text-blue-600 hover:text-blue-800 ml-2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="viewUser(${user.id})" class="text-green-600 hover:text-green-800 ml-2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="deleteUser(${user.id})" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                showMessage('error', result.data.message || 'خطأ في تحميل بيانات المستخدمين');
+            }
+        }
+
+        // Helper Functions
+        function getStatusColor(status) {
+            const colors = {
+                pending: 'yellow',
+                processing: 'blue',
+                sorting: 'purple',
+                cutting: 'green',
+                completed: 'green',
+                cancelled: 'red'
+            };
+            return colors[status] || 'gray';
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                pending: 'قيد الانتظار',
+                processing: 'قيد المعالجة',
+                sorting: 'مرحلة الفرز',
+                cutting: 'مرحلة القص',
+                completed: 'مكتمل',
+                cancelled: 'ملغي'
+            };
+            return texts[status] || status;
+        }
+
+        function getInvoiceStatusColor(status) {
+            const colors = {
+                draft: 'gray',
+                approved: 'blue',
+                paid: 'green',
+                delivered: 'purple',
+                cancelled: 'red'
+            };
+            return colors[status] || 'gray';
+        }
+
+        function getInvoiceStatusText(status) {
+            const texts = {
+                draft: 'مسودة',
+                approved: 'معتمدة',
+                paid: 'مدفوعة',
+                delivered: 'مسلمة',
+                cancelled: 'ملغاة'
+            };
+            return texts[status] || status;
+        }
+
+        function getUserTypeText(userType) {
+            const types = {
+                admin: 'مدير النظام',
+                warehouse_manager: 'أمين المستودع',
+                cutting_manager: 'مسؤول القص',
+                sorting_manager: 'مسؤول الفرز',
+                accountant: 'المحاسب',
+                order_tracker: 'متابع الطلبات',
+                delivery_manager: 'مسؤول التسليم',
+                sales: 'موظف المبيعات'
+            };
+            return types[userType] || userType;
+        }
+
+        // Message Functions
+        function showMessage(type, message) {
+            const container = document.getElementById('messagesContainer');
+            const messageClass = type === 'error' ? 'error-message' : 'success-message';
+            
+            container.innerHTML = `
+                <div class="${messageClass}">
+                    <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'check-circle'} ml-2"></i>
+                    ${message}
+                </div>
+            `;
+            
+            // Clear message after 5 seconds
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Toggle Sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-open');
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+
+        // Placeholder functions for actions
+        function showAddWarehouseModal() { showMessage('info', 'سيتم فتح نافذة إضافة مستودع جديد'); }
+        function editWarehouse(id) { showMessage('info', `تعديل المستودع رقم: ${id}`); }
+        function viewWarehouse(id) { showMessage('info', `عرض تفاصيل المستودع رقم: ${id}`); }
+        function transferMaterials(id) { showMessage('info', `نقل المواد من المستودع رقم: ${id}`); }
+
+        function showAddMaterialModal() { showMessage('info', 'سيتم فتح نافذة إضافة مادة جديدة'); }
+        async function saveMaterial() {
+            const materialData = {
+                name: document.getElementById('materialName').value,
+                weight: parseFloat(document.getElementById('materialWeight').value),
+                quantity: parseInt(document.getElementById('materialQuantity').value),
+                length: parseFloat(document.getElementById('materialLength').value),
+                width: parseFloat(document.getElementById('materialWidth').value),
+                type: document.getElementById('materialType').value,
+                grammage: parseFloat(document.getElementById('materialGrammage').value),
+                invoice_number: document.getElementById('invoiceNumber').value,
+                quality: document.getElementById('materialQuality').value,
+                roll_number: document.getElementById('rollNumber').value,
+                warehouse_id: parseInt(document.getElementById('warehouseLocation').value),
+                source: document.getElementById('materialSource').value,
+                cost: parseFloat(document.getElementById('materialCost').value)
+            };
+
+            const result = await apiRequest('/materials', {
+                method: 'POST',
+                body: JSON.stringify(materialData)
+            });
+
+            if (result.success) {
+                showMessage('success', 'تم حفظ المادة بنجاح');
+                clearMaterialForm();
+                loadMaterialsData();
+            } else {
+                showMessage('error', result.data.message || 'خطأ في حفظ المادة');
+            }
+        }
+        function clearMaterialForm() {
+            const inputs = ['materialName', 'materialWeight', 'materialQuantity', 'materialLength', 'materialWidth', 
+                          'materialType', 'materialGrammage', 'invoiceNumber', 'materialQuality', 'rollNumber', 
+                          'warehouseLocation', 'materialSource', 'materialCost'];
+            inputs.forEach(id => {
+                document.getElementById(id).value = '';
+            });
+        }
+        function editMaterial(id) { showMessage('info', `تعديل المادة رقم: ${id}`); }
+        function viewMaterial(id) { showMessage('info', `عرض تفاصيل المادة رقم: ${id}`); }
+        async function deleteMaterial(id) {
+            if (confirm(`هل أنت متأكد من حذف المادة رقم: ${id}?`)) {
+                const result = await apiRequest(`/materials/${id}`, { method: 'DELETE' });
+                if (result.success) {
+                    showMessage('success', 'تم حذف المادة بنجاح');
+                    loadMaterialsData();
+                } else {
+                    showMessage('error', result.data.message || 'خطأ في حذف المادة');
+                }
+            }
+        }
+
+        function showAddOrderModal() { showMessage('info', 'سيتم فتح نافذة إنشاء طلب جديد'); }
+        function filterOrders(status) { showMessage('info', `تصفية الطلبات حسب الحالة: ${status}`); }
+        function viewOrder(id) { showMessage('info', `عرض تفاصيل الطلب رقم: ${id}`); }
+        function approveOrder(id) { showMessage('info', `الموافقة على الطلب رقم: ${id}`); }
+        function moveToNextStage(id) { showMessage('info', `نقل الطلب رقم: ${id} إلى المرحلة التالية`); }
+
+        function createInvoice() { showMessage('info', 'إنشاء فاتورة جديدة'); }
+        function filterInvoices(status) { showMessage('info', `تصفية الفواتير حسب الحالة: ${status}`); }
+        function viewInvoice(id) { showMessage('info', `عرض الفاتورة رقم: ${id}`); }
+        function printInvoice(id) { showMessage('info', `طباعة الفاتورة رقم: ${id}`); }
+        function approveDelivery(id) { showMessage('info', `الموافقة على تسليم الفاتورة رقم: ${id}`); }
+
+        function generateReport(type) { showMessage('info', `توليد تقرير من نوع: ${type}`); }
+        function applyFilters() { showMessage('info', 'تطبيق الفلاتر'); }
+        function exportReport(format) { showMessage('info', `تصدير التقرير بصيغة: ${format}`); }
+        function printReport() { showMessage('info', 'طباعة التقرير'); }
+
+        function showAddUserModal() { showMessage('info', 'سيتم فتح نافذة إضافة مستخدم جديد'); }
+        function editUser(id) { showMessage('info', `تعديل المستخدم رقم: ${id}`); }
+        function viewUser(id) { showMessage('info', `عرض تفاصيل المستخدم رقم: ${id}`); }
+        async function deleteUser(id) {
+            if (confirm(`هل أنت متأكد من حذف المستخدم رقم: ${id}?`)) {
+                showMessage('info', `حذف المستخدم رقم: ${id}`);
+            }
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('mobile-open');
+            }
+        });
+    </script>
+</body>
+</html>

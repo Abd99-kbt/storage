@@ -1,0 +1,2095 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة المواد المتقدمة - نظام إدارة المستودعات</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
+
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 50%, #06d6a0 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #f97316 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #ef4444 100%);
+            --info-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 50%, #1d4ed8 100%);
+        }
+
+        .modern-card {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modern-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15), 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .material-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-modern {
+            border-radius: 16px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-modern:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-gradient);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        .input-modern {
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 16px;
+            padding: 16px 20px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: rgba(248, 250, 252, 0.5);
+        }
+
+        .input-modern:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .modal-modern {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content-modern {
+            background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 32px;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 85vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Mobile Responsive Improvements */
+        @media (max-width: 640px) {
+            .modal-content-modern {
+                max-width: 95vw;
+                max-height: 95vh;
+                margin: 10px;
+                border-radius: 20px;
+            }
+
+            .modal-header-modern {
+                padding: 20px 24px;
+                border-radius: 20px 20px 0 0;
+            }
+
+            .modal-body-modern {
+                padding: 24px;
+            }
+
+            .modal-header-modern h3 {
+                font-size: 1.25rem;
+            }
+
+            .btn-modern {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+
+            .input-modern {
+                padding: 12px 16px;
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+
+            .grid {
+                gap: 12px;
+            }
+
+            .modern-card {
+                padding: 20px;
+            }
+
+            .material-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .chart-container {
+                padding: 20px;
+            }
+
+            .material-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .stock-level {
+                height: 6px;
+            }
+
+            .material-actions {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .action-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+        }
+
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-available {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-low-stock {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-out-of-stock {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 24px;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quality-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .material-type-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .stock-level {
+            position: relative;
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .stock-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .expiry-warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .modal-xl {
+            max-width: 1200px;
+        }
+
+        .material-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .search-filters {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .filter-group {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .advanced-filters {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .advanced-filters.show {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .material-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .material-item:hover {
+            background: #f1f5f9;
+            transform: translateX(-2px);
+        }
+
+        .material-info {
+            flex: 1;
+        }
+
+        .material-actions {
+            display: flex;
+            space-x: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .batch-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid #3b82f6;
+        }
+
+        .quality-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .quality-excellent {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .quality-good {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .quality-average {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .quality-poor {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .stock-alert {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .material-visualization {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <div class="container mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">إدارة المواد المتقدمة</h1>
+                    <p class="text-gray-600">إدارة شاملة للمواد والمخزون والجودة</p>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="exportMaterialsData()" class="btn-modern bg-gradient-to-r from-purple-500 to-blue-600 text-white">
+                        <i class="fas fa-download ml-2"></i>تصدير البيانات
+                    </button>
+                    <button onclick="toggleAdvancedFilters()" class="btn-modern bg-white text-gray-700 border border-gray-200">
+                        <i class="fas fa-filter ml-2"></i>الفلاتر المتقدمة
+                    </button>
+                    <button onclick="showMaterialAnalytics()" class="btn-modern btn-success">
+                        <i class="fas fa-chart-bar ml-2"></i>التحليلات
+                    </button>
+                    <button onclick="showAddMaterialModal()" class="btn-modern bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+                        <i class="fas fa-plus ml-2"></i>إضافة مادة جديدة
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Material Modal -->
+        <div id="addMaterialModal" class="fixed inset-0 z-50 hidden">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="absolute inset-0 bg-black opacity-50"></div>
+                <div class="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white p-6 rounded-t-2xl">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-2xl font-bold">إضافة مادة جديدة</h3>
+                            <div class="flex items-center space-x-3">
+                                <button onclick="goBackFromModal('addMaterialModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-arrow-right text-lg"></i>
+                                </button>
+                                <button onclick="closeAddMaterialModal()" class="text-white hover:text-gray-200 text-2xl p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="addMaterialForm" onsubmit="saveNewMaterial(event)" class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">اسم المادة *</label>
+                                <input type="text" id="addMaterialName" name="name" required class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">الوزن (كغ)</label>
+                                <input type="number" id="addMaterialWeight" name="weight" step="0.01" class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">الكمية *</label>
+                                <input type="number" id="addMaterialQuantity" name="quantity" required min="1" class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">الطول (سم)</label>
+                                <input type="number" id="addMaterialLength" name="length" step="0.01" class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">العرض (سم)</label>
+                                <input type="number" id="addMaterialWidth" name="width" step="0.01" class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">النوع *</label>
+                                <select id="addMaterialType" name="type" required class="input-modern w-full">
+                                    <option value="">اختر النوع</option>
+                                    <option value="ورق">ورق</option>
+                                    <option value="كرتون">كرتون</option>
+                                    <option value="بلاستيك">بلاستيك</option>
+                                    <option value="معدن">معدن</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">الغراماج</label>
+                                <input type="number" id="addMaterialGrammage" name="grammage" step="0.01" class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">رقم الفاتورة</label>
+                                <input type="text" id="addInvoiceNumber" name="invoice_number" class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">الجودة</label>
+                                <select id="addMaterialQuality" name="quality" class="input-modern w-full">
+                                    <option value="">اختر الجودة</option>
+                                    <option value="ممتاز">ممتاز</option>
+                                    <option value="جيد">جيد</option>
+                                    <option value="متوسط">متوسط</option>
+                                    <option value="رديء">رديء</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">رقم الرول</label>
+                                <input type="text" id="addRollNumber" name="roll_number" class="input-modern w-full">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">المستودع *</label>
+                                <select id="addWarehouseLocation" name="warehouse_id" required class="input-modern w-full">
+                                    <option value="">اختر المستودع</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">المصدر</label>
+                                <input type="text" id="addMaterialSource" name="source" class="input-modern w-full">
+                            </div>
+
+                            <div class="md:col-span-2 lg:col-span-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">كلفة المادة</label>
+                                <input type="number" id="addMaterialCost" name="cost" step="0.01" class="input-modern w-full">
+                            </div>
+
+                            <div class="md:col-span-3 flex space-x-4">
+                                <button type="submit" class="btn-modern btn-success flex-1">
+                                    <i class="fas fa-save ml-2"></i>حفظ المادة
+                                </button>
+                                <button type="button" onclick="closeAddMaterialModal()" class="btn-modern bg-gray-600 text-white">
+                                    <i class="fas fa-times ml-2"></i>إلغاء
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Material Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">إجمالي المواد</p>
+                        <p class="text-3xl font-bold text-gray-800" id="totalMaterials">0</p>
+                        <p class="text-green-600 text-sm mt-1">
+                            <i class="fas fa-arrow-up ml-1"></i>+5.2% هذا الشهر
+                        </p>
+                    </div>
+                    <div class="material-icon bg-gradient-to-r from-blue-500 to-blue-600">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">إجمالي الوزن</p>
+                        <p class="text-3xl font-bold text-gray-800" id="totalWeight">0 طن</p>
+                        <p class="text-blue-600 text-sm mt-1">
+                            <i class="fas fa-weight ml-1"></i>متوسط 0.7 طن للمادة
+                        </p>
+                    </div>
+                    <div class="material-icon bg-gradient-to-r from-green-500 to-green-600">
+                        <i class="fas fa-weight-hanging"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">القيمة الإجمالية</p>
+                        <p class="text-3xl font-bold text-gray-800" id="totalValue">0</p>
+                        <p class="text-purple-600 text-sm mt-1">
+                            <i class="fas fa-dollar-sign ml-1"></i>متوسط 1,965 ليرة سورية للمادة
+                        </p>
+                    </div>
+                    <div class="material-icon bg-gradient-to-r from-purple-500 to-purple-600">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">منخفض المخزون</p>
+                        <p class="text-3xl font-bold text-gray-800" id="lowStockItems">0</p>
+                        <p class="text-orange-600 text-sm mt-1">
+                            <i class="fas fa-exclamation-triangle ml-1"></i>يحتاج إعادة طلب
+                        </p>
+                    </div>
+                    <div class="material-icon bg-gradient-to-r from-orange-500 to-orange-600">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modern-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm font-medium">ينتهي قريباً</p>
+                        <p class="text-3xl font-bold text-gray-800" id="expiringItems">0</p>
+                        <p class="text-red-600 text-sm mt-1">
+                            <i class="fas fa-clock ml-1"></i>أقل من 30 يوم
+                        </p>
+                    </div>
+                    <div class="material-icon bg-gradient-to-r from-red-500 to-red-600">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filters -->
+        <div class="modern-card mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">البحث</label>
+                    <input type="text" id="searchMaterials" placeholder="ابحث في المواد..." class="input-modern w-full" onkeyup="filterMaterials()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">النوع</label>
+                    <select id="filterType" class="input-modern w-full" onchange="filterMaterials()">
+                        <option value="">جميع الأنواع</option>
+                        <option value="ورق">ورق</option>
+                        <option value="كرتون">كرتون</option>
+                        <option value="بلاستيك">بلاستيك</option>
+                        <option value="معدن">معدن</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">المستودع</label>
+                    <select id="filterWarehouse" class="input-modern w-full" onchange="filterMaterials()">
+                        <option value="">جميع المستودعات</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">الحالة</label>
+                    <select id="filterStatus" class="input-modern w-full" onchange="filterMaterials()">
+                        <option value="">جميع الحالات</option>
+                        <option value="available">متاح</option>
+                        <option value="reserved">محجوز</option>
+                        <option value="damaged">تالف</option>
+                        <option value="expired">منتهي الصلاحية</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="advanced-filters mt-6" id="advancedFilters">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الجودة</label>
+                        <select id="filterQuality" class="input-modern w-full" onchange="filterMaterials()">
+                            <option value="">جميع مستويات الجودة</option>
+                            <option value="ممتاز">ممتاز</option>
+                            <option value="جيد">جيد</option>
+                            <option value="متوسط">متوسط</option>
+                            <option value="رديء">رديء</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الغراماج</label>
+                        <select id="filterGrammage" class="input-modern w-full" onchange="filterMaterials()">
+                            <option value="">جميع الغراماج</option>
+                            <option value="80-100">80-100 جرام</option>
+                            <option value="100-150">100-150 جرام</option>
+                            <option value="150-200">150-200 جرام</option>
+                            <option value="200+">أكثر من 200 جرام</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">تاريخ الإضافة</label>
+                        <input type="date" id="filterDate" class="input-modern w-full" onchange="filterMaterials()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">الكمية</label>
+                        <select id="filterQuantity" class="input-modern w-full" onchange="filterMaterials()">
+                            <option value="">جميع الكميات</option>
+                            <option value="0-50">0-50 وحدة</option>
+                            <option value="50-100">50-100 وحدة</option>
+                            <option value="100-500">100-500 وحدة</option>
+                            <option value="500+">أكثر من 500 وحدة</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center mt-6">
+                <button onclick="applyFilters()" class="btn-modern btn-primary">
+                    <i class="fas fa-search ml-2"></i>بحث وتصفية
+                </button>
+            </div>
+        </div>
+
+        <!-- Material Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="chart-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">توزيع المواد حسب النوع</h3>
+                <div id="materialsTypeChart" style="height: 350px;"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6">توزيع المواد حسب الجودة</h3>
+                <div id="materialsQualityChart" style="height: 350px;"></div>
+            </div>
+        </div>
+
+        <!-- Materials Grid -->
+        <div class="material-grid mb-8">
+            <div class="material-card">
+                <div class="material-type-badge bg-blue-500 text-white">ورق</div>
+                <div class="quality-badge bg-green-500 text-white">ممتاز</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">ورق أبيض A4</h3>
+                        <p class="text-gray-600 text-sm">رقم الرول: R001234</p>
+                    </div>
+                    <div class="material-icon bg-gradient-to-r from-blue-500 to-blue-600">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">الكمية المتاحة</span>
+                            <span class="font-medium">450 وحدة</span>
+                        </div>
+                        <div class="stock-level">
+                            <div class="stock-fill bg-gradient-to-r from-blue-500 to-blue-600" style="width: 90%"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">الوزن:</span>
+                            <span class="font-medium">225 كغ</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">الغراماج:</span>
+                            <span class="font-medium">80 جرام</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <span class="quality-indicator quality-excellent">
+                                <i class="fas fa-star ml-1"></i>ممتاز
+                            </span>
+                        </div>
+                        <div class="material-actions">
+                            <button onclick="viewMaterial(1)" class="action-btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="editMaterial(1)" class="action-btn bg-green-100 text-green-700 hover:bg-green-200">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteMaterial(1)" class="action-btn bg-red-100 text-red-700 hover:bg-red-200">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="material-card">
+                <div class="material-type-badge bg-orange-500 text-white">كرتون</div>
+                <div class="quality-badge bg-yellow-500 text-white">جيد</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">كرتون بني مموج</h3>
+                        <p class="text-gray-600 text-sm">رقم الرول: C005678</p>
+                    </div>
+                    <div class="material-icon bg-gradient-to-r from-orange-500 to-orange-600">
+                        <i class="fas fa-box"></i>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">الكمية المتاحة</span>
+                            <span class="font-medium">125 وحدة</span>
+                        </div>
+                        <div class="stock-level">
+                            <div class="stock-fill bg-gradient-to-r from-orange-500 to-orange-600" style="width: 62%"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">الوزن:</span>
+                            <span class="font-medium">188 كغ</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">الغراماج:</span>
+                            <span class="font-medium">150 جرام</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <span class="quality-indicator quality-good">
+                                <i class="fas fa-thumbs-up ml-1"></i>جيد
+                            </span>
+                        </div>
+                        <div class="material-actions">
+                            <button onclick="viewMaterial(2)" class="action-btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="editMaterial(2)" class="action-btn bg-green-100 text-green-700 hover:bg-green-200">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteMaterial(2)" class="action-btn bg-red-100 text-red-700 hover:bg-red-200">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="material-card stock-alert">
+                <div class="material-type-badge bg-green-500 text-white">بلاستيك</div>
+                <div class="quality-badge bg-red-500 text-white">منخفض</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">بلاستيك شفاف</h3>
+                        <p class="text-gray-600 text-sm">رقم الرول: P009876</p>
+                    </div>
+                    <div class="material-icon bg-gradient-to-r from-green-500 to-green-600">
+                        <i class="fas fa-recycle"></i>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">الكمية المتاحة</span>
+                            <span class="font-medium text-red-600">15 وحدة</span>
+                        </div>
+                        <div class="stock-level">
+                            <div class="stock-fill bg-gradient-to-r from-red-500 to-red-600" style="width: 15%"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">الوزن:</span>
+                            <span class="font-medium">30 كغ</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">الغراماج:</span>
+                            <span class="font-medium">200 جرام</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <span class="quality-indicator quality-average">
+                                <i class="fas fa-minus ml-1"></i>متوسط
+                            </span>
+                        </div>
+                        <div class="material-actions">
+                            <button onclick="viewMaterial(3)" class="action-btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="reorderMaterial(3)" class="action-btn bg-orange-100 text-orange-700 hover:bg-orange-200">
+                                <i class="fas fa-redo"></i>إعادة طلب
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="material-card">
+                <div class="material-type-badge bg-gray-500 text-white">معدن</div>
+                <div class="quality-badge bg-green-500 text-white">ممتاز</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800">ألمنيوم ورقي</h3>
+                        <p class="text-gray-600 text-sm">رقم الرول: M004321</p>
+                    </div>
+                    <div class="material-icon bg-gradient-to-r from-gray-500 to-gray-600">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">الكمية المتاحة</span>
+                            <span class="font-medium">78 وحدة</span>
+                        </div>
+                        <div class="stock-level">
+                            <div class="stock-fill bg-gradient-to-r from-gray-500 to-gray-600" style="width: 78%"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">الوزن:</span>
+                            <span class="font-medium">156 كغ</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">الغراماج:</span>
+                            <span class="font-medium">120 جرام</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <span class="quality-indicator quality-excellent">
+                                <i class="fas fa-star ml-1"></i>ممتاز
+                            </span>
+                        </div>
+                        <div class="material-actions">
+                            <button onclick="viewMaterial(4)" class="action-btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="editMaterial(4)" class="action-btn bg-green-100 text-green-700 hover:bg-green-200">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteMaterial(4)" class="action-btn bg-red-100 text-red-700 hover:bg-red-200">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Material Details Modal -->
+        <div id="materialDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full mx-4">
+                <div class="bg-gradient-to-r from-green-500 to-blue-600 px-6 py-4 border-b rounded-t-2xl">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-white">تفاصيل المادة</h3>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="goBackFromModal('materialDetailsModal')" class="text-white hover:text-gray-200 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                <i class="fas fa-arrow-right text-lg"></i>
+                            </button>
+                            <button onclick="closeMaterialDetailsModal()" class="text-white hover:text-gray-300 p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all duration-200">
+                                <i class="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Material Information -->
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-4">معلومات أساسية</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">اسم المادة:</span>
+                                    <span class="font-medium" id="detailMaterialName"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">النوع:</span>
+                                    <span class="font-medium" id="detailMaterialType"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">الكمية:</span>
+                                    <span class="font-medium" id="detailMaterialQuantity"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">الوزن:</span>
+                                    <span class="font-medium" id="detailMaterialWeight"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">الأبعاد:</span>
+                                    <span class="font-medium" id="detailMaterialDimensions"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">الغراماج:</span>
+                                    <span class="font-medium" id="detailMaterialGrammage"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">الجودة:</span>
+                                    <span class="font-medium" id="detailMaterialQuality"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">رقم الفاتورة:</span>
+                                    <span class="font-medium" id="detailInvoiceNumber"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">رقم الرول:</span>
+                                    <span class="font-medium" id="detailRollNumber"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">المستودع:</span>
+                                    <span class="font-medium" id="detailMaterialWarehouse"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">المصدر:</span>
+                                    <span class="font-medium" id="detailMaterialSource"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">الكلفة:</span>
+                                    <span class="font-medium" id="detailMaterialCost"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">تاريخ الإضافة:</span>
+                                    <span class="font-medium" id="detailMaterialCreated"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Material Analytics -->
+                        <div>
+                            <h4 class="font-medium text-gray-800 mb-4">التحليلات والإحصائيات</h4>
+                            <div class="space-y-4">
+                                <div class="bg-blue-50 rounded-lg p-4">
+                                    <h5 class="font-medium text-blue-800 mb-2">معدل الاستهلاك</h5>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-blue-600">متوسط يومي</span>
+                                        <span class="font-bold text-blue-800">12 وحدة/يوم</span>
+                                    </div>
+                                </div>
+                                <div class="bg-green-50 rounded-lg p-4">
+                                    <h5 class="font-medium text-green-800 mb-2">القيمة الحالية</h5>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-green-600">إجمالي القيمة</span>
+                                        <span class="font-bold text-green-800">45,000 ليرة سورية</span>
+                                    </div>
+                                </div>
+                                <div class="bg-purple-50 rounded-lg p-4">
+                                    <h5 class="font-medium text-purple-800 mb-2">تاريخ انتهاء الصلاحية</h5>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-purple-600">الحالة</span>
+                                        <span class="font-bold text-purple-800">صالح (120 يوم)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Batch Information -->
+                    <div class="mt-8">
+                        <h4 class="font-medium text-gray-800 mb-4">معلومات الدفعة</h4>
+                        <div class="batch-info">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <span class="text-sm text-gray-600">رقم الدفعة:</span>
+                                    <span class="font-medium">BATCH-2025-001</span>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-600">تاريخ الإنتاج:</span>
+                                    <span class="font-medium">2025-01-15</span>
+                                </div>
+                                <div>
+                                    <span class="text-sm text-gray-600">تاريخ انتهاء الصلاحية:</span>
+                                    <span class="font-medium">2026-01-15</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Material History -->
+                    <div class="mt-8">
+                        <h4 class="font-medium text-gray-800 mb-4">سجل حركة المادة</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center ml-3">
+                                    <i class="fas fa-plus text-green-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">تم إضافة 50 وحدة جديدة</p>
+                                    <p class="text-sm text-gray-600">منذ 3 أيام - المستودع الرئيسي 1</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center ml-3">
+                                    <i class="fas fa-exchange-alt text-blue-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">تم نقل 25 وحدة</p>
+                                    <p class="text-sm text-gray-600">منذ أسبوع - إلى المستودع الفرازة</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center ml-3">
+                                    <i class="fas fa-shopping-cart text-orange-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">تم استخدام 30 وحدة في طلبية</p>
+                                    <p class="text-sm text-gray-600">منذ أسبوعين - طلبية رقم #1234</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 mt-8">
+                        <button onclick="closeMaterialDetailsModal()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            إغلاق
+                        </button>
+                        <button onclick="editFromMaterialDetails()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            تعديل
+                        </button>
+                        <button onclick="showMaterialReports()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                            التقارير
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:3000/api';
+        let authToken = localStorage.getItem('authToken');
+        let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        let allMaterials = [];
+        let allWarehouses = [];
+
+        // Fix API calls to use full URL with CORS proxy if needed
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            if (url.startsWith('/api/')) {
+                url = 'http://localhost:3000' + url;
+            }
+            return originalFetch(url, options);
+        };
+
+        // API helper functions
+        async function apiRequest(endpoint, options = {}) {
+            const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            };
+
+            if (authToken) {
+                config.headers['Authorization'] = `Bearer ${authToken}`;
+            }
+
+            return fetch(url, config);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Materials DOM Content Loaded - Checking authentication...');
+            console.log('Auth Token:', authToken);
+            console.log('Current User:', currentUser);
+
+            // Check authentication
+            if (!authToken || !currentUser) {
+                console.log('No auth token or user found, redirecting to login...');
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Check if user has permission to manage materials
+            if (!hasPermission('manage_materials')) {
+                console.log('User does not have materials management permission');
+                showMessage('error', 'ليس لديك صلاحية للوصول إلى إدارة المواد');
+                return;
+            }
+
+            console.log('User has permission, testing backend connection...');
+
+            // Test backend connection first
+            testBackendConnection().then(() => {
+                console.log('Backend connection successful, loading data...');
+                loadMaterialsData();
+                loadWarehousesForDropdown();
+                setupEventListeners();
+                // Load charts after materials data is loaded
+                setTimeout(() => {
+                    loadMaterialsCharts();
+                }, 1000);
+            }).catch((error) => {
+                console.error('Backend connection test failed:', error);
+                showMessage('error', 'لا يمكن الاتصال بالخادم. تأكد من أن الخادم يعمل على المنفذ 3000');
+            });
+
+            // Also load warehouses after a short delay to ensure they're available
+            setTimeout(() => {
+                loadWarehousesForDropdown();
+            }, 500);
+        });
+
+        // Test backend connection
+        async function testBackendConnection() {
+            try {
+                const response = await fetch('http://localhost:3000/api/materials', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok || response.status === 401 || response.status === 403) {
+                    console.log('Backend connection successful');
+                    return true;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Backend connection failed:', error);
+                throw error;
+            }
+        }
+
+        // Check permissions
+        function hasPermission(permission) {
+            if (!currentUser || !currentUser.userType) return false;
+            const permissions = {
+                admin: ['manage_users', 'manage_warehouses', 'manage_materials', 'manage_orders', 'manage_invoices', 'view_reports', 'manage_settings'],
+                warehouse_manager: ['manage_warehouses', 'manage_materials', 'transfer_materials', 'view_reports'],
+                cutting_manager: ['manage_materials', 'manage_orders', 'view_reports', 'approve_orders'],
+                sorting_manager: ['manage_materials', 'manage_orders', 'view_reports', 'approve_orders'],
+                accountant: ['manage_invoices', 'view_reports', 'export_data', 'manage_orders'],
+                order_tracker: ['manage_orders', 'view_reports'],
+                delivery_manager: ['manage_orders', 'manage_invoices', 'view_reports'],
+                sales: ['manage_orders', 'view_reports']
+            };
+            return permissions[currentUser.userType] && permissions[currentUser.userType].includes(permission);
+        }
+
+        // Load materials data
+        async function loadMaterialsData() {
+            try {
+                const response = await fetch('/api/materials', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    allMaterials = await response.json();
+                    updateMaterialsGrid(allMaterials);
+                    updateMaterialStatistics(allMaterials);
+                    // Load charts after materials data is loaded
+                    loadMaterialsCharts();
+                } else {
+                    showMessage('error', 'خطأ في تحميل بيانات المواد');
+                }
+            } catch (error) {
+                console.error('Error loading materials:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل بيانات المواد');
+            }
+        }
+
+        // Load and render materials charts
+        function loadMaterialsCharts() {
+            if (allMaterials.length === 0) {
+                console.log('No materials data available for charts');
+                return;
+            }
+
+            // Chart 1: Materials distribution by type
+            const typeData = {};
+            allMaterials.forEach(material => {
+                const type = material.type || 'غير محدد';
+                typeData[type] = (typeData[type] || 0) + 1;
+            });
+
+            const typeLabels = Object.keys(typeData);
+            const typeValues = Object.values(typeData);
+            const typeColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+            const typeChartData = [{
+                values: typeValues,
+                labels: typeLabels,
+                type: 'pie',
+                marker: {
+                    colors: typeColors.slice(0, typeLabels.length)
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside',
+                hovertemplate: '%{label}: %{value} مادة (%{percent})<extra></extra>'
+            }];
+
+            const typeLayout = {
+                margin: { t: 0, b: 0, l: 0, r: 0 },
+                font: { family: 'Cairo, sans-serif', size: 14 },
+                showlegend: true,
+                legend: {
+                    orientation: 'h',
+                    y: -0.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                }
+            };
+
+            Plotly.newPlot('materialsTypeChart', typeChartData, typeLayout, { responsive: true });
+
+            // Chart 2: Materials distribution by quality
+            const qualityData = {};
+            allMaterials.forEach(material => {
+                const quality = material.quality || 'غير محدد';
+                qualityData[quality] = (qualityData[quality] || 0) + 1;
+            });
+
+            const qualityLabels = Object.keys(qualityData);
+            const qualityValues = Object.values(qualityData);
+            const qualityColors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+
+            const qualityChartData = [{
+                values: qualityValues,
+                labels: qualityLabels,
+                type: 'pie',
+                marker: {
+                    colors: qualityColors.slice(0, qualityLabels.length)
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside',
+                hovertemplate: '%{label}: %{value} مادة (%{percent})<extra></extra>'
+            }];
+
+            const qualityLayout = {
+                margin: { t: 0, b: 0, l: 0, r: 0 },
+                font: { family: 'Cairo, sans-serif', size: 14 },
+                showlegend: true,
+                legend: {
+                    orientation: 'h',
+                    y: -0.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                }
+            };
+
+            Plotly.newPlot('materialsQualityChart', qualityChartData, qualityLayout, { responsive: true });
+
+            console.log('Materials charts loaded successfully');
+        }
+
+        // Update materials charts with filtered data
+        function updateMaterialsCharts(materials) {
+            if (!materials || materials.length === 0) {
+                console.log('No materials data available for charts update');
+                return;
+            }
+
+            // Update Chart 1: Materials distribution by type
+            const typeData = {};
+            materials.forEach(material => {
+                const type = material.type || 'غير محدد';
+                typeData[type] = (typeData[type] || 0) + 1;
+            });
+
+            const typeLabels = Object.keys(typeData);
+            const typeValues = Object.values(typeData);
+            const typeColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+            const typeChartData = [{
+                values: typeValues,
+                labels: typeLabels,
+                type: 'pie',
+                marker: {
+                    colors: typeColors.slice(0, typeLabels.length)
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside',
+                hovertemplate: '%{label}: %{value} مادة (%{percent})<extra></extra>'
+            }];
+
+            const typeLayout = {
+                margin: { t: 0, b: 0, l: 0, r: 0 },
+                font: { family: 'Cairo, sans-serif', size: 14 },
+                showlegend: true,
+                legend: {
+                    orientation: 'h',
+                    y: -0.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                }
+            };
+
+            Plotly.react('materialsTypeChart', typeChartData, typeLayout, { responsive: true });
+
+            // Update Chart 2: Materials distribution by quality
+            const qualityData = {};
+            materials.forEach(material => {
+                const quality = material.quality || 'غير محدد';
+                qualityData[quality] = (qualityData[quality] || 0) + 1;
+            });
+
+            const qualityLabels = Object.keys(qualityData);
+            const qualityValues = Object.values(qualityData);
+            const qualityColors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+
+            const qualityChartData = [{
+                values: qualityValues,
+                labels: qualityLabels,
+                type: 'pie',
+                marker: {
+                    colors: qualityColors.slice(0, qualityLabels.length)
+                },
+                textinfo: 'label+percent',
+                textposition: 'outside',
+                hovertemplate: '%{label}: %{value} مادة (%{percent})<extra></extra>'
+            }];
+
+            const qualityLayout = {
+                margin: { t: 0, b: 0, l: 0, r: 0 },
+                font: { family: 'Cairo, sans-serif', size: 14 },
+                showlegend: true,
+                legend: {
+                    orientation: 'h',
+                    y: -0.1,
+                    x: 0.5,
+                    xanchor: 'center'
+                }
+            };
+
+            Plotly.react('materialsQualityChart', qualityChartData, qualityLayout, { responsive: true });
+
+            console.log('Materials charts updated successfully');
+        }
+
+        // Load warehouses for dropdown
+        async function loadWarehousesForDropdown() {
+            try {
+                console.log('=== LOADING WAREHOUSES FOR DROPDOWN ===');
+
+                const response = await fetch('/api/warehouses', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                console.log('Warehouses response status:', response.status);
+
+                if (response.ok) {
+                    allWarehouses = await response.json();
+                    console.log('Warehouses loaded successfully:', allWarehouses.length, 'warehouses');
+
+                    const select = document.getElementById('filterWarehouse');
+                    const addSelect = document.getElementById('addWarehouseLocation');
+
+                    if (select) {
+                        select.innerHTML = '<option value="">جميع المستودعات</option>';
+                    }
+                    if (addSelect) {
+                        addSelect.innerHTML = '<option value="">اختر المستودع</option>';
+                    }
+
+                    if (allWarehouses.length === 0) {
+                        console.log('No warehouses found');
+                        if (addSelect) {
+                            addSelect.innerHTML = '<option value="">لا توجد مستودعات متاحة</option>';
+                        }
+                        return;
+                    }
+
+                    allWarehouses.forEach(warehouse => {
+                        console.log('Adding warehouse to dropdown:', warehouse.name, 'ID:', warehouse.id);
+
+                        if (select) {
+                            const option1 = document.createElement('option');
+                            option1.value = warehouse.id;
+                            option1.textContent = warehouse.name;
+                            select.appendChild(option1);
+                        }
+
+                        if (addSelect) {
+                            const option2 = document.createElement('option');
+                            option2.value = warehouse.id;
+                            option2.textContent = warehouse.name;
+                            addSelect.appendChild(option2);
+                        }
+                    });
+
+                    console.log('Warehouses dropdown populated successfully');
+                } else {
+                    console.error('Error loading warehouses:', response.status);
+                    const addSelect = document.getElementById('addWarehouseLocation');
+                    if (addSelect) {
+                        addSelect.innerHTML = '<option value="">خطأ في تحميل المستودعات</option>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading warehouses:', error);
+                const addSelect = document.getElementById('addWarehouseLocation');
+                if (addSelect) {
+                    addSelect.innerHTML = '<option value="">خطأ في تحميل المستودعات</option>';
+                }
+            }
+        }
+
+        // Update materials grid
+        function updateMaterialsGrid(materials) {
+            const grid = document.querySelector('.material-grid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+
+            if (materials.length === 0) {
+                grid.innerHTML = '<p class="text-center text-gray-600 py-12">لا توجد مواد للعرض</p>';
+                return;
+            }
+
+            materials.forEach(material => {
+                const materialCard = document.createElement('div');
+                materialCard.className = 'modern-card material-item';
+                materialCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">${material.name}</h3>
+                            <p class="text-gray-600 text-sm">رقم الرول: ${material.roll_number || 'غير محدد'}</p>
+                        </div>
+                        <div class="material-icon bg-gradient-to-r ${getMaterialIconColor(material.type)}">
+                            <i class="fas ${getMaterialIcon(material.type)}"></i>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-600">الكمية المتاحة</span>
+                                <span class="font-medium">${material.quantity} وحدة</span>
+                            </div>
+                            <div class="stock-level">
+                                <div class="stock-fill bg-gradient-to-r ${getStockLevelColor(material.quantity)}" style="width: ${getStockLevelPercentage(material.quantity)}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">الوزن:</span>
+                                <span class="font-medium">${material.weight || 0} كغ</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">الغراماج:</span>
+                                <span class="font-medium">${material.grammage || 'غير محدد'}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-2">
+                                <span class="quality-indicator ${getQualityClass(material.quality)}">
+                                    <i class="fas fa-star ml-1"></i>${material.quality || 'غير محدد'}
+                                </span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="viewMaterial(${material.id})" class="btn-modern btn-primary" style="padding: 8px 12px; font-size: 12px;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="editMaterial(${material.id})" class="btn-modern btn-success" style="padding: 8px 12px; font-size: 12px;">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteMaterial(${material.id})" class="btn-modern btn-danger" style="padding: 8px 12px; font-size: 12px;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(materialCard);
+            });
+        }
+
+        // Update material statistics
+        function updateMaterialStatistics(materials) {
+            const totalMaterials = materials.length;
+            const totalWeight = materials.reduce((sum, m) => sum + (parseFloat(m.weight) || 0), 0);
+            const totalValue = materials.reduce((sum, m) => sum + (parseFloat(m.cost) || 0), 0);
+            const lowStockItems = materials.filter(m => parseInt(m.quantity) < 50).length;
+
+            document.getElementById('totalMaterials').textContent = totalMaterials;
+            document.getElementById('totalWeight').textContent = `${totalWeight.toFixed(1)} طن`;
+            document.getElementById('totalValue').textContent = totalValue.toLocaleString();
+            document.getElementById('lowStockItems').textContent = lowStockItems;
+        }
+
+        // Filter materials
+        function filterMaterials() {
+            const searchTerm = document.getElementById('searchMaterials').value.toLowerCase();
+            const typeFilter = document.getElementById('filterType').value;
+            const warehouseFilter = document.getElementById('filterWarehouse').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const qualityFilter = document.getElementById('filterQuality').value;
+            const grammageFilter = document.getElementById('filterGrammage').value;
+            const dateFilter = document.getElementById('filterDate').value;
+            const quantityFilter = document.getElementById('filterQuantity').value;
+
+            const filteredMaterials = allMaterials.filter(material => {
+                // Search filter
+                if (searchTerm && !material.name.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+
+                // Type filter
+                if (typeFilter && material.type !== typeFilter) {
+                    return false;
+                }
+
+                // Warehouse filter
+                if (warehouseFilter && material.warehouse_id != warehouseFilter) {
+                    return false;
+                }
+
+                // Status filter
+                if (statusFilter && material.status !== statusFilter) {
+                    return false;
+                }
+
+                // Quality filter
+                if (qualityFilter && material.quality !== qualityFilter) {
+                    return false;
+                }
+
+                // Grammage filter
+                if (grammageFilter) {
+                    const grammage = material.grammage || 0;
+                    switch(grammageFilter) {
+                        case '80-100':
+                            if (grammage < 80 || grammage > 100) return false;
+                            break;
+                        case '100-150':
+                            if (grammage < 100 || grammage > 150) return false;
+                            break;
+                        case '150-200':
+                            if (grammage < 150 || grammage > 200) return false;
+                            break;
+                        case '200+':
+                            if (grammage <= 200) return false;
+                            break;
+                    }
+                }
+
+                // Date filter
+                if (dateFilter) {
+                    const materialDate = new Date(material.created_at).toDateString();
+                    const filterDate = new Date(dateFilter).toDateString();
+                    if (materialDate !== filterDate) return false;
+                }
+
+                // Quantity filter
+                if (quantityFilter) {
+                    const quantity = material.quantity || 0;
+                    switch(quantityFilter) {
+                        case '0-50':
+                            if (quantity > 50) return false;
+                            break;
+                        case '50-100':
+                            if (quantity < 50 || quantity > 100) return false;
+                            break;
+                        case '100-500':
+                            if (quantity < 100 || quantity > 500) return false;
+                            break;
+                        case '500+':
+                            if (quantity < 500) return false;
+                            break;
+                    }
+                }
+
+                return true;
+            });
+
+            updateMaterialsGrid(filteredMaterials);
+            // Update charts with filtered data
+            updateMaterialsCharts(filteredMaterials);
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Advanced filters toggle
+            const advancedFilters = document.getElementById('advancedFilters');
+            if (advancedFilters) {
+                // Initially hide advanced filters
+                advancedFilters.style.display = 'none';
+            }
+        }
+
+        function toggleAdvancedFilters() {
+            const advancedFilters = document.getElementById('advancedFilters');
+            if (advancedFilters.style.display === 'none') {
+                advancedFilters.style.display = 'grid';
+                advancedFilters.classList.add('show');
+            } else {
+                advancedFilters.style.display = 'none';
+                advancedFilters.classList.remove('show');
+            }
+        }
+
+        // Modal functions
+        function showAddMaterialModal() {
+            document.getElementById('addMaterialModal').classList.remove('hidden');
+            document.getElementById('addMaterialModal').classList.add('flex');
+        }
+
+        function closeAddMaterialModal() {
+            document.getElementById('addMaterialModal').classList.add('hidden');
+            document.getElementById('addMaterialModal').classList.remove('flex');
+            clearMaterialForm();
+        }
+
+        function clearMaterialForm() {
+            const inputs = ['addMaterialName', 'addMaterialWeight', 'addMaterialQuantity', 'addMaterialLength', 'addMaterialWidth',
+                          'addMaterialType', 'addMaterialGrammage', 'addInvoiceNumber', 'addMaterialQuality', 'addRollNumber',
+                          'addWarehouseLocation', 'addMaterialSource', 'addMaterialCost'];
+            inputs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.value = '';
+            });
+        }
+
+        async function saveNewMaterial(event) {
+            event.preventDefault();
+
+            const materialData = {
+                name: document.getElementById('addMaterialName').value,
+                weight: parseFloat(document.getElementById('addMaterialWeight').value) || null,
+                quantity: parseInt(document.getElementById('addMaterialQuantity').value),
+                length: parseFloat(document.getElementById('addMaterialLength').value) || null,
+                width: parseFloat(document.getElementById('addMaterialWidth').value) || null,
+                type: document.getElementById('addMaterialType').value,
+                grammage: parseFloat(document.getElementById('addMaterialGrammage').value) || null,
+                invoice_number: document.getElementById('addInvoiceNumber').value || null,
+                quality: document.getElementById('addMaterialQuality').value || null,
+                roll_number: document.getElementById('addRollNumber').value || null,
+                warehouse_id: parseInt(document.getElementById('addWarehouseLocation').value),
+                source: document.getElementById('addMaterialSource').value || null,
+                cost: parseFloat(document.getElementById('addMaterialCost').value) || null
+            };
+
+            try {
+                const response = await fetch('/api/materials', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(materialData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', 'تم إضافة المادة بنجاح');
+                    closeAddMaterialModal();
+                    loadMaterialsData();
+                } else {
+                    showMessage('error', result.errors ? result.errors.map(e => e.msg).join(', ') : result.message || 'خطأ في إضافة المادة');
+                }
+            } catch (error) {
+                console.error('Error saving material:', error);
+                showMessage('error', 'حدث خطأ أثناء حفظ المادة');
+            }
+        }
+
+        // Material management functions
+        async function viewMaterial(id) {
+            try {
+                // Find material data from local cache first
+                const material = allMaterials.find(m => m.id === id);
+                if (!material) {
+                    showMessage('error', 'المادة غير موجودة');
+                    return;
+                }
+
+                // Show loading state
+                document.getElementById('materialDetailsModal').classList.remove('hidden');
+                document.getElementById('materialDetailsModal').classList.add('flex');
+
+                // Store material ID for later use
+                document.getElementById('materialDetailsModal').dataset.materialId = id;
+
+                // Populate material information
+                document.getElementById('detailMaterialName').textContent = material.name;
+                document.getElementById('detailMaterialType').textContent = material.type || 'غير محدد';
+                document.getElementById('detailMaterialQuantity').textContent = `${material.quantity || 0} وحدة`;
+                document.getElementById('detailMaterialWeight').textContent = `${material.weight || 0} كغ`;
+                document.getElementById('detailMaterialDimensions').textContent = `${material.length || 0} × ${material.width || 0} سم`;
+                document.getElementById('detailMaterialGrammage').textContent = material.grammage ? `${material.grammage} جرام` : 'غير محدد';
+                document.getElementById('detailMaterialQuality').textContent = material.quality || 'غير محدد';
+                document.getElementById('detailInvoiceNumber').textContent = material.invoice_number || 'غير محدد';
+                document.getElementById('detailRollNumber').textContent = material.roll_number || 'غير محدد';
+                document.getElementById('detailMaterialWarehouse').textContent = material.warehouse_name || 'غير محدد';
+                document.getElementById('detailMaterialSource').textContent = material.source || 'غير محدد';
+                document.getElementById('detailMaterialCost').textContent = material.cost ? `${material.cost} ليرة سورية` : 'غير محدد';
+                document.getElementById('detailMaterialCreated').textContent = new Date(material.created_at).toLocaleDateString('ar-SA');
+
+                // Load material movements/history
+                await loadMaterialMovements(id);
+
+            } catch (error) {
+                console.error('Error viewing material details:', error);
+                showMessage('error', 'حدث خطأ أثناء تحميل تفاصيل المادة');
+            }
+        }
+
+        async function loadMaterialMovements(materialId) {
+            try {
+                const response = await fetch(`http://localhost:3000/api/materials/${materialId}/movements`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const movements = await response.json();
+                    displayMaterialMovements(movements);
+                } else {
+                    console.error('Error loading material movements:', response.status);
+                    displayMaterialMovements([]);
+                }
+            } catch (error) {
+                console.error('Error loading material movements:', error);
+                displayMaterialMovements([]);
+            }
+        }
+
+        function displayMaterialMovements(movements) {
+            const movementsContainer = document.querySelector('.space-y-3');
+            if (!movementsContainer) return;
+
+            // Clear existing movements except the first one (header)
+            while (movementsContainer.children.length > 1) {
+                movementsContainer.removeChild(movementsContainer.lastChild);
+            }
+
+            if (movements.length === 0) {
+                const noMovements = document.createElement('div');
+                noMovements.className = 'flex items-center p-3 bg-gray-50 rounded-lg';
+                noMovements.innerHTML = `
+                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center ml-3">
+                        <i class="fas fa-info text-gray-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-800">لا توجد حركات مسجلة</p>
+                        <p class="text-sm text-gray-600">لم يتم تسجيل أي حركات لهذه المادة بعد</p>
+                    </div>
+                `;
+                movementsContainer.appendChild(noMovements);
+                return;
+            }
+
+            movements.slice(0, 5).forEach(movement => {
+                const movementElement = document.createElement('div');
+                movementElement.className = 'flex items-center p-3 bg-gray-50 rounded-lg';
+                movementElement.innerHTML = `
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center ml-3">
+                        <i class="fas ${movement.movement_type === 'in' ? 'fa-plus' : 'fa-minus'} text-green-600 text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-800">${movement.movement_type === 'in' ? 'إدخال' : 'إخراج'} ${movement.quantity} وحدة</p>
+                        <p class="text-sm text-gray-600">${new Date(movement.created_at).toLocaleDateString('ar-SA')} - ${movement.warehouse_name || 'مستودع غير محدد'}</p>
+                    </div>
+                `;
+                movementsContainer.appendChild(movementElement);
+            });
+        }
+
+        async function editMaterial(id) {
+            const material = allMaterials.find(m => m.id === id);
+            if (!material) return;
+
+            // Fill form with material data
+            document.getElementById('addMaterialName').value = material.name;
+            document.getElementById('addMaterialWeight').value = material.weight || '';
+            document.getElementById('addMaterialQuantity').value = material.quantity || '';
+            document.getElementById('addMaterialLength').value = material.length || '';
+            document.getElementById('addMaterialWidth').value = material.width || '';
+            document.getElementById('addMaterialType').value = material.type || '';
+            document.getElementById('addMaterialGrammage').value = material.grammage || '';
+            document.getElementById('addInvoiceNumber').value = material.invoice_number || '';
+            document.getElementById('addMaterialQuality').value = material.quality || '';
+            document.getElementById('addRollNumber').value = material.roll_number || '';
+            document.getElementById('addWarehouseLocation').value = material.warehouse_id || '';
+            document.getElementById('addMaterialSource').value = material.source || '';
+            document.getElementById('addMaterialCost').value = material.cost || '';
+
+            // Store material ID for update
+            document.getElementById('addMaterialForm').dataset.materialId = id;
+
+            // Show modal
+            showAddMaterialModal();
+        }
+
+        // Update saveNewMaterial to handle both create and update
+        async function saveNewMaterial(event) {
+            event.preventDefault();
+
+            const materialId = document.getElementById('addMaterialForm').dataset.materialId;
+            const isUpdate = !!materialId;
+
+            const materialData = {
+                name: document.getElementById('addMaterialName').value,
+                weight: parseFloat(document.getElementById('addMaterialWeight').value) || null,
+                quantity: parseInt(document.getElementById('addMaterialQuantity').value),
+                length: parseFloat(document.getElementById('addMaterialLength').value) || null,
+                width: parseFloat(document.getElementById('addMaterialWidth').value) || null,
+                type: document.getElementById('addMaterialType').value,
+                grammage: parseFloat(document.getElementById('addMaterialGrammage').value) || null,
+                invoice_number: document.getElementById('addInvoiceNumber').value || null,
+                quality: document.getElementById('addMaterialQuality').value || null,
+                roll_number: document.getElementById('addRollNumber').value || null,
+                warehouse_id: parseInt(document.getElementById('addWarehouseLocation').value),
+                source: document.getElementById('addMaterialSource').value || null,
+                cost: parseFloat(document.getElementById('addMaterialCost').value) || null
+            };
+
+            try {
+                const url = isUpdate ? `/api/materials/${materialId}` : '/api/materials';
+                const method = isUpdate ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(materialData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', `تم ${isUpdate ? 'تحديث' : 'إضافة'} المادة بنجاح`);
+                    closeAddMaterialModal();
+                    loadMaterialsData();
+                } else {
+                    showMessage('error', result.errors ? result.errors.map(e => e.msg).join(', ') : result.message || `خطأ في ${isUpdate ? 'تحديث' : 'إضافة'} المادة`);
+                }
+            } catch (error) {
+                console.error(`Error ${isUpdate ? 'updating' : 'saving'} material:`, error);
+                showMessage('error', `حدث خطأ أثناء ${isUpdate ? 'تحديث' : 'حفظ'} المادة`);
+            }
+        }
+
+        async function deleteMaterial(id) {
+            const material = allMaterials.find(m => m.id === id);
+            if (!confirm(`هل أنت متأكد من حذف المادة "${material?.name || 'هذه المادة'}"؟ لا يمكن التراجع عن هذا الإجراء.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/materials/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    showMessage('success', 'تم حذف المادة بنجاح');
+                    loadMaterialsData();
+                } else {
+                    const errorData = await response.json();
+                    showMessage('error', errorData.message || 'خطأ في حذف المادة');
+                }
+            } catch (error) {
+                console.error('Error deleting material:', error);
+                showMessage('error', 'حدث خطأ أثناء حذف المادة');
+            }
+        }
+
+        // Export functionality
+        async function exportMaterialsData() {
+            try {
+                const response = await fetch('/api/materials/export', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'materials_data.xlsx';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    showMessage('error', 'خطأ في تصدير البيانات');
+                }
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                showMessage('error', 'حدث خطأ أثناء تصدير البيانات');
+            }
+        }
+
+        // Helper functions
+        function getMaterialIconColor(type) {
+            const colors = {
+                'ورق': 'from-blue-500 to-blue-600',
+                'كرتون': 'from-orange-500 to-orange-600',
+                'بلاستيك': 'from-green-500 to-green-600',
+                'معدن': 'from-gray-500 to-gray-600'
+            };
+            return colors[type] || 'from-purple-500 to-purple-600';
+        }
+
+        function getMaterialIcon(type) {
+            const icons = {
+                'ورق': 'fa-file-alt',
+                'كرتون': 'fa-box',
+                'بلاستيك': 'fa-recycle',
+                'معدن': 'fa-cog'
+            };
+            return icons[type] || 'fa-cube';
+        }
+
+        function getStockLevelColor(quantity) {
+            if (quantity > 100) return 'from-green-500 to-green-600';
+            if (quantity > 50) return 'from-blue-500 to-blue-600';
+            if (quantity > 10) return 'from-orange-500 to-orange-600';
+            return 'from-red-500 to-red-600';
+        }
+
+        function getStockLevelPercentage(quantity) {
+            if (quantity > 100) return 100;
+            if (quantity > 50) return 75;
+            if (quantity > 10) return 50;
+            return Math.max(quantity / 10 * 100, 10);
+        }
+
+        function getQualityClass(quality) {
+            const classes = {
+                'ممتاز': 'quality-excellent',
+                'جيد': 'quality-good',
+                'متوسط': 'quality-average',
+                'رديء': 'quality-poor'
+            };
+            return classes[quality] || 'quality-average';
+        }
+
+        function applyFilters() {
+            filterMaterials();
+        }
+
+        function showMessage(type, message) {
+            console.log(`Material message (${type}):`, message);
+            alert(message);
+        }
+
+        // Modal control functions
+        function closeMaterialDetailsModal() {
+            document.getElementById('materialDetailsModal').classList.add('hidden');
+            document.getElementById('materialDetailsModal').classList.remove('flex');
+        }
+
+        function editFromMaterialDetails() {
+            const materialId = document.getElementById('materialDetailsModal').dataset.materialId;
+            closeMaterialDetailsModal();
+            editMaterial(parseInt(materialId));
+        }
+
+        function showMaterialReports() {
+            showMessage('info', 'تقارير المواد - سيتم تطويرها قريباً');
+        }
+
+        // Placeholder functions for features not yet implemented
+        function showMaterialAnalytics() {
+            showMessage('info', 'التحليلات المتقدمة للمواد - سيتم تطويرها قريباً');
+        }
+
+        // Go back from modal function
+        function goBackFromModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        }
+    </script>
+</body>
+</html>
